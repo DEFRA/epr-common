@@ -1,0 +1,47 @@
+pr: none
+trigger:
+  branches:
+    include:
+    - '*'
+  paths:
+    include:
+    - 'src/EPR.Common/EPR.Common.Functions/'
+    exclude:
+    - 'src/EPR.Common/EPR.Common.Authorization/'
+    - 'src/EPR.Common/EPR.Common.Logging/'
+
+pool: DEFRA-COMMON-ubuntu2004-SSV3
+
+variables:
+  NUGET_ENABLE_LEGACY_CSPROJ_PACK: true
+  NUGET_PACKAGES: $(Pipeline.Workspace)/.nuget/packages
+  
+  majorMinor: 1.00
+  
+  ${{ if or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')) }}:
+    configuration: Release
+    suffix: ''
+    versioningScheme: 'byBuildNumber'
+  ${{ else }}:
+    configuration: Debug
+    suffix: '0-rc'
+    versioningScheme: 'byEnvVar'
+  buildNumber: $[counter(format('{0}{1}', variables['majorMinor'], variables['suffix']), 0)]
+  version: $(majorMinor).$(suffix)$(buildNumber)
+
+steps:
+  - task: UseDotNet@2
+    displayName: 'Use .NET Core 6'
+    inputs:
+      version: 6.0.x
+
+  - template: templates/template-build-test.yaml
+    parameters:
+      version: $(version)
+      configuration: $(configuration)
+      solutionFolder: src/EPR.Common/
+      solutionName: EPR.Common
+      projectName: EPR.Common.Functions
+      runTests: true
+      testProjectName: EPR.Common.Functions.Test
+      versioningScheme: $(versioningScheme)

@@ -1,0 +1,100 @@
+parameters:
+- name: version
+  type: string
+- name: configuration
+  type: string
+- name: solutionFolder
+  type: string
+  default: ''
+- name: solutionName
+  type: string
+  default: ''
+- name: projectName
+  type: string
+  default: ''
+- name: runTests
+  type: boolean
+  default: true
+- name: testProjectName
+  type: string
+  default: ''
+- name: versioningScheme
+  type: string
+  default: ''
+
+steps:
+  - task: PowerShell@2
+    displayName: Set the name of the build (i.e. the Build.BuildNumber)
+    inputs:
+      targetType: 'inline'
+      script: |
+        Write-Host "Setting the name of the build to '${{parameters.version}}'."
+        Write-Host "##vso[build.updatebuildnumber]${{parameters.version}}"
+        Write-Host "version: ${{parameters.version}}"
+        Write-Host "configuration: ${{parameters.configuration}}"
+        Write-Host "solutionFolder: ${{parameters.solutionFolder}}"
+        Write-Host "solutionName: ${{parameters.solutionName}}"
+        Write-Host "projectName: ${{parameters.projectName}}"
+        Write-Host "runTests: ${{parameters.runTests}}"
+        Write-Host "testProjectName: ${{parameters.testProjectName}}"
+        Write-Host "versioningScheme: ${{parameters.versioningScheme}}"
+
+  - task: NuGetToolInstaller@1
+    displayName: 'Use NuGet Latest'
+
+  - task: NuGetCommand@2
+    displayName: 'List NuGet config'
+    inputs:
+      command: 'custom'
+      arguments: 'locals all -list'
+
+  - task: NuGetCommand@2
+    displayName: "Package Restore"
+    inputs:
+      command: 'restore'
+      restoreSolution: '${{parameters.solutionFolder}}/*.sln'
+      feedsToUse: 'select'
+
+  - task: DotNetCoreCLI@2
+    condition: eq(${{parameters.runTests}}, true)
+    displayName: "Build Test Project"
+    inputs:
+      command: 'build'
+      projects: '${{parameters.solutionFolder}}${{parameters.testProjectName}}/${{parameters.testProjectName}}.csproj'
+      arguments: '--configuration ${{parameters.configuration}} /p:Version="${{parameters.version}}'
+
+  - task: DotNetCoreCLI@2
+    displayName: "Run Unit Tests"
+    condition: eq(${{parameters.runTests}}, true)
+    inputs:
+      command: test
+      projects: '${{parameters.solutionFolder}}${{parameters.testProjectName}}/${{parameters.testProjectName}}.csproj'
+      arguments: '--configuration ${{parameters.configuration}} --no-build /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=$(Build.SourcesDirectory)/coverage/ /p:MergeWith=$(Build.SourcesDirectory)/coverage/ --collect "Code coverage"'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Build Project'
+    inputs:
+      command: build
+      projects: '${{parameters.solutionFolder}}${{parameters.projectName}}/${{parameters.projectName}}.csproj'
+      arguments: '--configuration $(configuration)'
+
+  - task: NuGetCommand@2
+    displayName: "Create nuget Package"
+    inputs:
+      command: 'pack'
+      arguments: '--configuration $(configuration) --no-build'
+      packagesToPack: '${{parameters.solutionFolder}}${{parameters.projectName}}/${{parameters.projectName}}.csproj'
+      versioningScheme: ${{parameters.versioningScheme}}
+      versionEnvVar: Build.BuildNumber
+
+  - task: NuGetCommand@2
+    displayName: 'Publish Packages'
+    inputs:
+      command: 'push'
+      feedsToUse: 'select'
+      packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*${{parameters.projectName}}*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*${{parameters.projectName}}*.symbols.nupkg'
+      nuGetFeedType: 'internal'
+      publishVstsFeed: 'RWD-CPR-EPR4P-ADO/defra-epr-common'
+      allowPackageConflicts: true
+      versioningScheme: ${{parameters.versioningScheme}}
+      versionEnvVar: Build.BuildNumber
