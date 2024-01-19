@@ -11,4 +11,6 @@ public class Organisation
     public string? OrganisationType { get; set; }
     
     public string? OrganisationNumber { get; set; }
+
+    public int? NationId { get; set; }
 }
