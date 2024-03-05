@@ -15,19 +15,6 @@ pool: DEFRA-COMMON-ubuntu2004-SSV3
 variables:
   NUGET_ENABLE_LEGACY_CSPROJ_PACK: true
   NUGET_PACKAGES: $(Pipeline.Workspace)/.nuget/packages
-  
-  majorMinor: 1.00
-  
-  ${{ if or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')) }}:
-    configuration: Release
-    suffix: ''
-    versioningScheme: 'byBuildNumber'
-  ${{ else }}:
-    configuration: Debug
-    suffix: '0-rc'
-    versioningScheme: 'byEnvVar'
-  buildNumber: $[counter(format('{0}{1}', variables['majorMinor'], variables['suffix']), 0)]
-  version: $(majorMinor).$(suffix)$(buildNumber)
 
 steps:
   - task: UseDotNet@2
@@ -37,11 +24,9 @@ steps:
 
   - template: templates/template-build-test.yaml
     parameters:
-      version: $(version)
-      configuration: $(configuration)
+      versionVariableGroupName: EPR.Common.Logging
       solutionFolder: src/EPR.Common/
       solutionName: EPR.Common
       projectName: EPR.Common.Logging
       runTests: true
       testProjectName: EPR.Common.Logging.Tests
-      versioningScheme: $(versioningScheme)

@@ -1,8 +1,4 @@
 parameters:
-- name: version
-  type: string
-- name: configuration
-  type: string
 - name: solutionFolder
   type: string
   default: ''
@@ -18,26 +14,118 @@ parameters:
 - name: testProjectName
   type: string
   default: ''
-- name: versioningScheme
+- name: versionVariableGroupName
   type: string
-  default: ''
 
 steps:
+  - pwsh: | 
+      Set-StrictMode -Version 3.0
+
+      [string]$adoExtensionName = 'azure-devops'
+      Write-Debug "adoExtensionName=$adoExtensionName"
+
+      $ENV:AZURE_DEVOPS_EXT_PAT = '$(System.AccessToken)'
+
+      $adoExtension = az extension list | ConvertFrom-Json -Depth 99 | Where-Object -FilterScript { $_.Name -eq $adoExtensionName } 
+
+      if ($null -eq $adoExtension) {
+        Write-Host "Install Az CLI extension '$adoExtensionName' ..."
+        az extension add --name $adoExtensionName
+      }
+      else {
+        Write-Host "Az CLI extension '$adoExtensionName' already installed"
+      }
+    displayName: Initialize Az CLI ADO Extension
+
+  - ${{ if or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')) }}:
+
+    - pwsh: | 
+        Set-StrictMode -Version 3.0
+        [string]$variableGroupName = '${{parameters.versionVariableGroupName}}'
+        [string]$organizationUri = '$(System.CollectionUri)'
+        [string]$teamProject = '$(System.TeamProject)'
+        Write-Debug "organizationUri=$organizationUri"
+        Write-Debug "teamProject=$teamProject"
+        Write-Debug "variableGroupName=$variableGroupName"
+
+        $ENV:AZURE_DEVOPS_EXT_PAT = '$(System.AccessToken)'
+
+        Write-Host "Setting default organization to '$organizationUri' and project to '$teamProject'"
+        az devops configure --defaults organization=$organizationUri project=$teamProject
+
+        $variableGroupSummary = az pipelines variable-group list | ConvertFrom-Json -Depth 99 | Where-Object -FilterScript { $_.Name -eq $variableGroupName } 
+        
+        if ($null -eq $variableGroupSummary) {
+          throw "Could not find variable group $variableGroupName"
+        } 
+        else {
+          $variableGroup = az pipelines variable-group show --id $variableGroupSummary.id | ConvertFrom-Json -Depth 99
+
+          [System.Version]$currentVersion = [System.Version]::new($variableGroup.variables.major.value, $variableGroup.variables.minor.value, $variableGroup.variables.patch.value)
+          [System.Version]$newVersion = [System.Version]::new($currentVersion.Major, $currentVersion.Minor, $currentVersion.Build + 1)
+          Write-Host "Incrementing $($currentVersion.ToString()) to $($newVersion.ToString())"
+
+          az pipelines variable-group variable update --id $variableGroup.Id --name Patch --value $newVersion.Build
+          az pipelines variable-group variable update --id $variableGroup.Id --name Version --value $newVersion.ToString()
+
+          Write-Host "##vso[task.setvariable variable=MajorVersion]$($newVersion.Major)"
+          Write-Host "##vso[task.setvariable variable=MinorVersion]$($newVersion.Minor)"
+          Write-Host "##vso[task.setvariable variable=PatchVersion]$($newVersion.Build)"
+          Write-Host "##vso[task.setvariable variable=Version]$($newVersion.ToString())"
+          Write-Host "##vso[task.setvariable variable=versioningScheme]byBuildNumber"
+          Write-Host "##vso[task.setvariable variable=configuration]Release"
+        }
+      displayName: Version up
+  - ${{ else }}:
+    - pwsh: | 
+        Set-StrictMode -Version 3.0
+        [string]$variableGroupName = '${{parameters.versionVariableGroupName}}'
+        [string]$organizationUri = '$(System.CollectionUri)'
+        [string]$teamProject = '$(System.TeamProject)'
+        Write-Debug "organizationUri=$organizationUri"
+        Write-Debug "teamProject=$teamProject"
+        Write-Debug "variableGroupName=$variableGroupName"
+
+        $ENV:AZURE_DEVOPS_EXT_PAT = '$(System.AccessToken)'
+
+        Write-Host "Setting default organization to '$organizationUri' and project to '$teamProject'"
+        az devops configure --defaults organization=$organizationUri project=$teamProject
+
+        $variableGroupSummary = az pipelines variable-group list | ConvertFrom-Json -Depth 99 | Where-Object -FilterScript { $_.Name -eq $variableGroupName } 
+        
+        if ($null -eq $variableGroupSummary) {
+          throw "Could not find variable group $variableGroupName"
+        } 
+        else {
+          $variableGroup = az pipelines variable-group show --id $variableGroupSummary.id | ConvertFrom-Json -Depth 99
+
+          [System.Version]$currentVersion = [System.Version]::new($variableGroup.variables.major.value, $variableGroup.variables.minor.value, $variableGroup.variables.patch.value)
+          Write-Host "Obtained $($currentVersion.ToString())"
+          [string]$previewVersion = "$($currentVersion.ToString())-rc.$($env:BUILD_BUILDID)"
+          Write-Host "##vso[task.setvariable variable=MajorVersion]$($currentVersion.Major)"
+          Write-Host "##vso[task.setvariable variable=MinorVersion]$($currentVersion.Minor)"
+          Write-Host "##vso[task.setvariable variable=PatchVersion]$($currentVersion.Build)"
+          Write-Host "##vso[task.setvariable variable=Version]$previewVersion"
+          Write-Host "##vso[task.setvariable variable=versioningScheme]byEnvVar"
+          Write-Host "##vso[task.setvariable variable=configuration]Debug"
+        }
+      displayName: Preview Version
+
   - task: PowerShell@2
     displayName: Set the name of the build (i.e. the Build.BuildNumber)
     inputs:
       targetType: 'inline'
       script: |
-        Write-Host "Setting the name of the build to '${{parameters.version}}'."
-        Write-Host "##vso[build.updatebuildnumber]${{parameters.version}}"
-        Write-Host "version: ${{parameters.version}}"
-        Write-Host "configuration: ${{parameters.configuration}}"
+        Write-Host "Setting the name of the build to '$(Version)'."
+        Write-Host "##vso[build.updatebuildnumber]$(Version)"
+        Write-Host "version: $(Version)"
+        Write-Host "configuration: $(configuration)"
         Write-Host "solutionFolder: ${{parameters.solutionFolder}}"
         Write-Host "solutionName: ${{parameters.solutionName}}"
         Write-Host "projectName: ${{parameters.projectName}}"
         Write-Host "runTests: ${{parameters.runTests}}"
         Write-Host "testProjectName: ${{parameters.testProjectName}}"
-        Write-Host "versioningScheme: ${{parameters.versioningScheme}}"
+        Write-Host "versioningScheme: $(versioningScheme)"
 
   - task: NuGetToolInstaller@1
     displayName: 'Use NuGet Latest'
@@ -61,7 +149,7 @@ steps:
     inputs:
       command: 'build'
       projects: '${{parameters.solutionFolder}}${{parameters.testProjectName}}/${{parameters.testProjectName}}.csproj'
-      arguments: '--configuration ${{parameters.configuration}} /p:Version="${{parameters.version}}'
+      arguments: '--configuration $(configuration) /p:Version=$(Version)'
 
   - task: DotNetCoreCLI@2
     displayName: "Run Unit Tests"
@@ -69,7 +157,7 @@ steps:
     inputs:
       command: test
       projects: '${{parameters.solutionFolder}}${{parameters.testProjectName}}/${{parameters.testProjectName}}.csproj'
-      arguments: '--configuration ${{parameters.configuration}} --no-build /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=$(Build.SourcesDirectory)/coverage/ /p:MergeWith=$(Build.SourcesDirectory)/coverage/ --collect "Code coverage"'
+      arguments: '--configuration $(configuration) --no-build /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=$(Build.SourcesDirectory)/coverage/ /p:MergeWith=$(Build.SourcesDirectory)/coverage/ --collect "Code coverage"'
 
   - task: DotNetCoreCLI@2
     displayName: 'Build Project'
@@ -84,7 +172,7 @@ steps:
       command: 'pack'
       arguments: '--configuration $(configuration) --no-build'
       packagesToPack: '${{parameters.solutionFolder}}${{parameters.projectName}}/${{parameters.projectName}}.csproj'
-      versioningScheme: ${{parameters.versioningScheme}}
+      versioningScheme: $(versioningScheme)
       versionEnvVar: Build.BuildNumber
 
   - task: NuGetCommand@2
@@ -96,5 +184,5 @@ steps:
       nuGetFeedType: 'internal'
       publishVstsFeed: 'RWD-CPR-EPR4P-ADO/defra-epr-common'
       allowPackageConflicts: true
-      versioningScheme: ${{parameters.versioningScheme}}
+      versioningScheme: $(versioningScheme)
       versionEnvVar: Build.BuildNumber
