@@ -1,9 +1,8 @@
 ﻿namespace EPR.Common.Authorization.Extensions;
 
-using System.Diagnostics.CodeAnalysis;
-using System.Net.Http.Headers;
 using Config;
 using Constants;
+using Services;
 using Handlers;
 using Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -11,6 +10,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Requirements;
 using Sessions;
+using System.Diagnostics.CodeAnalysis;
+using System.Net.Http.Headers;
 
 [ExcludeFromCodeCoverage]
 public static class ServiceCollectionExtensions
@@ -77,6 +78,7 @@ public static class ServiceCollectionExtensions
             .AddScoped<IAuthorizationHandler, AccountManagementPolicyHandler<T>>()
             .AddScoped<IAuthorizationHandler, RegulatorBasicPolicyHandler<T>>()
             .AddScoped<IAuthorizationHandler, RegulatorAdminPolicyHandler<T>>()
+            .AddScoped<ICryptoServices, CryptoServices>()
             .AddHttpClient(FacadeConstants.FacadeAPIClient, client =>
             {
                 client.BaseAddress =
