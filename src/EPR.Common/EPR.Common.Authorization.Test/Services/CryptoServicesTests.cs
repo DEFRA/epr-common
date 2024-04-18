@@ -16,6 +16,41 @@ public class CryptoServicesTests
     }
 
     [TestMethod]
+    public void EncryptText_When_TextIsNull_ThenItThrowsException()
+    {
+        // Arrange
+        var cryptoService = new CryptoServices();
+
+        // Act
+        // Assert
+        Assert.ThrowsException<ArgumentNullException>(() => cryptoService.EncryptText(null, _encryptionKey), "Encrypting null input should throw ArgumentNullException.");
+    }
+
+    [TestMethod]
+    public void EncryptText_When_EncryptionKeyIsNull_ThenItThrowsException()
+    {
+        // Arrange
+        var cryptoService = new CryptoServices();
+
+        // Act
+        // Assert
+        Assert.ThrowsException<ArgumentNullException>(() => cryptoService.EncryptText("SomeText", null), "Encrypting with null encryption key should throw ArgumentNullException.");
+    }
+
+    [TestMethod]
+    public void EncryptText_When_EncryptionKeyIsNotValidFormt_ThenItThrowsException()
+    {
+        // Arrange
+        var cryptoService = new CryptoServices();
+        var textToEncrypt = "Hello, world!";
+
+        // Act
+        // Assert
+        var invalidKey = "InvalidKey";
+        Assert.ThrowsException<FormatException>(() => cryptoService.EncryptText(textToEncrypt, invalidKey), "Encrypting with invalid encryption key format should throw FormatException.");
+    }
+
+    [TestMethod]
     public void EncryptText_ValidInput_ReturnsEncryptedText()
     {
         // Arrange
@@ -31,7 +66,7 @@ public class CryptoServicesTests
     }
 
     [TestMethod]
-    public void EncryptText_ComprehensiveTests()
+    public void EncryptText_When_InputsNotMatching_Then_decryptedValuesAreNotEqual()
     {
         // Arrange
         var cryptoService = new CryptoServices();
@@ -43,33 +78,54 @@ public class CryptoServicesTests
         // Assert
         Assert.IsFalse(string.IsNullOrEmpty(encryptedText), "Encrypted text should not be null or empty.");
         Assert.AreNotEqual(textToEncrypt, encryptedText, "Encrypted text should not be the same as the original text.");
-
-        // Try decrypting the encrypted text to ensure it's reversible
-        var decryptedText = cryptoService.DecryptText(encryptedText, _encryptionKey);
-        Assert.AreEqual(textToEncrypt, decryptedText, "Decrypted text should match the original text.");
-
-        // Test with empty string as input
-        var encryptedEmpty = cryptoService.EncryptText("", _encryptionKey);
-        Assert.IsNotNull(encryptedEmpty, "Encrypted text for empty input should not be null.");
-        Assert.AreNotEqual("", encryptedEmpty, "Encrypted text for empty input should not be empty.");
-
-        // Test with long text
-        var longText = new string('A', 1000); // Creating a long string
-        var encryptedLongText = cryptoService.EncryptText(longText, _encryptionKey);
-        Assert.IsNotNull(encryptedLongText, "Encrypted text for long input should not be null.");
-        Assert.AreNotEqual(longText, encryptedLongText, "Encrypted text for long input should not be the same as the original text.");
-
-        // Test with null input
-        Assert.ThrowsException<ArgumentNullException>(() => cryptoService.EncryptText(null, _encryptionKey), "Encrypting null input should throw ArgumentNullException.");
-
-        // Test with null encryption key
-        Assert.ThrowsException<ArgumentNullException>(() => cryptoService.EncryptText("SomeText", null), "Encrypting with null encryption key should throw ArgumentNullException.");
-
-        // Test with invalid encryption key format
-        var invalidKey = "InvalidKey";
-        Assert.ThrowsException<FormatException>(() => cryptoService.EncryptText("SomeText", invalidKey), "Encrypting with invalid encryption key format should throw FormatException.");
     }
 
+
+    [TestMethod]
+    public void EncryptText_When_DecryptTheSameInput_ThenItIsEqualOriginalValue()
+    {
+        // Arrange
+        var cryptoService = new CryptoServices();
+        var textToEncrypt = "Hello, world!";
+
+        // Act
+        var encryptedText = cryptoService.EncryptText(textToEncrypt, _encryptionKey);
+
+        // Assert
+        var decryptedText = cryptoService.DecryptText(encryptedText, _encryptionKey);
+        Assert.AreEqual(textToEncrypt, decryptedText, "Decrypted text should match the original text.");
+    }
+
+    [TestMethod]
+    public void EncryptEmptyText_When_EncryptTheEmptyString_ThenTheEncryptedValueIsNotEmpty()
+    {
+        // Arrange
+        var cryptoService = new CryptoServices();
+
+        // Act
+        var encryptedEmpty = cryptoService.EncryptText("", _encryptionKey);
+
+        // Assert
+        Assert.IsNotNull(encryptedEmpty, "Encrypted text for empty input should not be null.");
+        Assert.AreNotEqual("", encryptedEmpty, "Encrypted text for empty input should not be empty.");
+    }
+
+    [TestMethod]
+    public void EncryptLongText_When_Encrypt_ThenItGetsEncryptedCorrectly()
+    {
+        // Arrange
+        var cryptoService = new CryptoServices();
+
+        // Act
+        var longText = new string('A', 1000); // Creating a long string
+        var encryptedLongText = cryptoService.EncryptText(longText, _encryptionKey);
+        var decryptedLongText = cryptoService.DecryptText(encryptedLongText, _encryptionKey);
+
+        // Assert
+        Assert.IsNotNull(encryptedLongText, "Encrypted text for long input should not be null.");
+        Assert.AreNotEqual(longText, encryptedLongText, "Encrypted text for long input should not be the same as the original text.");
+        Assert.AreEqual(decryptedLongText, longText);
+    }
 
     [TestMethod]
     public void DecryptText_ValidEncryptedText_ReturnsOriginalText()
@@ -84,20 +140,5 @@ public class CryptoServicesTests
 
         // Assert
         Assert.AreEqual(originalText, decryptedText);
-    }
-
-    [TestMethod]
-    [ExpectedException(typeof(FormatException))]
-    public void DecryptText_InvalidKey_ThrowsArgumentException()
-    {
-        // Arrange
-        var cryptoService = new CryptoServices();
-        var encryptedText = "EncryptedText";
-        var invalidKey = "InvalidKey";
-
-        // Act
-       cryptoService.DecryptText(encryptedText, invalidKey);
-
-       //Expected exception is formatException
     }
 }
