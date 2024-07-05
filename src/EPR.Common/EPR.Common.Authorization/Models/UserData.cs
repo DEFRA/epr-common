@@ -20,6 +20,8 @@ public class UserData
     
     public int ServiceRoleId { get; set; }
 
+    public string Telephone { get; set; }
+
     public string? InviteToken { get; set; }
 
     public List<Organisation> Organisations { get; set; } = new();
