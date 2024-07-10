@@ -60,7 +60,7 @@ BenchmarkDotNet.Artifacts/
 # .NET Core
 project.lock.json
 project.fragment.lock.json
-packages.lock.json
+**/packages.lock.json
 artifacts/
 
 # ASP.NET Scaffolding
@@ -406,4 +406,3 @@ FodyWeavers.xsd
 *.DS_Store
 
 **/obj
-/src/EPR.Common/EPR.Common.Logging/packages.lock.json
