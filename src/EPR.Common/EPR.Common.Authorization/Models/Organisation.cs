@@ -13,4 +13,8 @@ public class Organisation
     public string? OrganisationNumber { get; set; }
 
     public int? NationId { get; set; }
+
+    public string OrgAddress { get; set; }
+
+    public string? JobTitle { get; set; }
 }

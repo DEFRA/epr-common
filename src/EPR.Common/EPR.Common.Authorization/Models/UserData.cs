@@ -22,5 +22,7 @@ public class UserData
 
     public string? InviteToken { get; set; }
 
+    public string? Telephone { get; set; }
+
     public List<Organisation> Organisations { get; set; } = new();
 }
