@@ -14,6 +14,8 @@ public class Organisation
 
     public int? NationId { get; set; }
 
+    public string? SubBuildingName { get; set; }
+
     public string? BuildingName { get; set; }
 
     public string? BuildingNumber { get; set; }
