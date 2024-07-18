@@ -6,6 +6,8 @@ public class Organisation
 
     public string? Name { get; set; }
 
+    public string? TradingName { get; set; }
+
     public string? OrganisationRole { get; set; }
 
     public string? OrganisationType { get; set; }
