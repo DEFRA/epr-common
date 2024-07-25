@@ -8,5 +8,6 @@ public static class PolicyConstants
     public const string AccountManagementPolicy = "AccountManagementPolicy";
     public const string RegulatorBasicPolicy = "RegulatorBasicPolicy";
     public const string RegulatorAdminPolicy = "RegulatorAdminPolicy";
+    public const string AccountPermissionManagementPolicy = "AccountPermissionManagementPolicy";
 
 }
