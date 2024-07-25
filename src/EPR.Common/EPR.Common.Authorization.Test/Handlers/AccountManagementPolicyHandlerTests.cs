@@ -22,7 +22,7 @@ public class AccountManagementPolicyHandlerTests
     [DataRow(ServiceRoles.BasicUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
     public async Task AccountManagement_Succeeds_WhenUserHasRolesInClaim_AndIsEnrolledBasic(
     string serviceRole, string roleInOrganisation, string enrolmentStatus) =>
-    await HandleRequirementAsync_Succeeds_WhenUserHasRolesInClaimAndIsBasicUser(serviceRole, roleInOrganisation, enrolmentStatus);
+    await HandleRequirementAsync_Succeeds_WhenUserHasRolesInClaim(serviceRole, roleInOrganisation, enrolmentStatus);
 
     [TestMethod]
     [DataRow(ServiceRoles.ApprovedPerson, RoleInOrganisation.NotSet, EnrolmentStatuses.Approved)]
