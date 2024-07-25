@@ -139,6 +139,42 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
         _sessionManagerMock.Verify(x => x.SaveSessionAsync(It.IsAny<ISession>(), It.IsAny<MySession>()), Times.Never);
     }
 
+    protected async Task HandleRequirementAsync_Succeeds_WhenUserHasRolesInClaimAndIsBasicUser(
+        string serviceRole, string roleInOrganisation, string enrolmentStatus)
+    {
+        // Arrange
+        var userData = _fixture.Build<UserData>()
+            .With(x => x.ServiceRole, serviceRole)
+            .With(x => x.RoleInOrganisation, roleInOrganisation)
+            .With(x => x.EnrolmentStatus, enrolmentStatus)
+            .Create();
+
+        var objectId = "12345678-1234-1234-1234-123456789033";
+        var claims = new[]
+        {
+            new Claim(ClaimConstants.ObjectId, objectId),
+            new Claim(ClaimTypes.UserData, JsonSerializer.Serialize(userData))
+        };
+
+        var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
+        var user = new ClaimsPrincipal(claimsIdentity);
+
+        _httpContextMock.SetupGet(x => x.User).Returns(user);
+
+        var authorizationHandlerContext = new AuthorizationHandlerContext(
+            new List<IAuthorizationRequirement> { new TPolicyRequirement() },
+            user,
+            _httpContextMock.Object);
+
+        // Act
+        await _policyHandler.HandleAsync(authorizationHandlerContext);
+
+        // Assert
+        Assert.IsTrue(authorizationHandlerContext.HasSucceeded);
+        _sessionManagerMock.Verify(x => x.GetSessionAsync(It.IsAny<ISession>()), Times.Never);
+        _sessionManagerMock.Verify(x => x.SaveSessionAsync(It.IsAny<ISession>(), It.IsAny<MySession>()), Times.Never);
+    }
+
     protected async Task HandleRequirementAsync_Fails_WhenUserIsNotAuthenticated(
         string serviceRole, string roleInOrganisation, string enrolmentStatus)
     {
