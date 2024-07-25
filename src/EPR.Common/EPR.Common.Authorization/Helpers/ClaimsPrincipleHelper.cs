@@ -103,4 +103,19 @@ public static class ClaimsPrincipleHelper
 
         return userData?.ServiceRole is ServiceRoles.RegulatorAdmin;
     }
+
+    public static bool IsEnrolledAdminOrBasic(ClaimsPrincipal claimsPrinciple)
+    {
+        var userDataClaim = claimsPrinciple.Claims.FirstOrDefault(c => c.Type == ClaimTypes.UserData);
+
+        if (userDataClaim == null)
+        {
+            return false;
+        }
+        var userData = JsonSerializer.Deserialize<UserData>(userDataClaim.Value);
+        return ((userData?.ServiceRole is ServiceRoles.BasicUser && userData?.RoleInOrganisation == RoleInOrganisation.Employee )|| userData?.RoleInOrganisation == RoleInOrganisation.Admin) &&
+               (userData.EnrolmentStatus == EnrolmentStatuses.Approved
+                || userData.EnrolmentStatus == EnrolmentStatuses.Enrolled
+                || userData.EnrolmentStatus == EnrolmentStatuses.Pending);
+    }
 }

@@ -37,4 +37,6 @@ public class Organisation
     public string? Country { get; set; }
 
     public string? Postcode { get; set; }
+
+    public string? JobTitle { get; set; }
 }
