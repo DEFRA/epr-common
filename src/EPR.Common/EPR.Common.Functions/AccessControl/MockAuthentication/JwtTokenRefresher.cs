@@ -27,6 +27,7 @@ public class JwtTokenRefresher : IJwtTokenRefresher
                 IssuerSigningKey = new SymmetricSecurityKey(this.tokenKey),
                 ValidateIssuer = false,
                 ValidateAudience = false,
+                NameClaimType = "name",
             }, out var validatedToken);
         var jwtToken = validatedToken as JwtSecurityToken;
         if (jwtToken == null || !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
