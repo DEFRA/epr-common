@@ -407,3 +407,6 @@ FodyWeavers.xsd
 **/obj
 /src/EPR.Common/EPR.Common.Authorization/packages.lock.json
 /src/EPR.Common/EPR.Common.Logging/packages.lock.json
+/src/EPR.Common/EPR.Common.Functions/packages.lock.json
+/src/EPR.Common/EPR.Common.Logging/packages.lock.json
+/src/EPR.Common/EPR.Common.Authorization/packages.lock.json
