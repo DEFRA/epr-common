@@ -37,7 +37,7 @@ public static class ClaimsPrincipleExtensions
     public static T GetData<T>(this ClaimsPrincipal claimsPrincipal, string name)
     {
         var claimsIdentity = claimsPrincipal.Identity as ClaimsIdentity;
-        var claim = claimsIdentity?.FindFirst(name);
+        var claim = claimsIdentity?.Claims.FirstOrDefault(c => c.Type == name);
 
         return claim != null ? JsonSerializer.Deserialize<T>(claim.Value) : default;
     }
