@@ -10,7 +10,8 @@ trigger:
     - 'src/EPR.Common/EPR.Common.Authorization/'
     - 'src/EPR.Common/EPR.Common.Functions/'
 
-Peramaters:
+parameters:
+
   - name: dotnetVersion
     value: dotnetVersion8
 
