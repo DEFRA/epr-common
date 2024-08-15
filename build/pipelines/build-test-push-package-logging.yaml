@@ -10,13 +10,6 @@ trigger:
     - 'src/EPR.Common/EPR.Common.Authorization/'
     - 'src/EPR.Common/EPR.Common.Functions/'
 
-parameters:
-
-  - name: dotnetVersion
-    type: string
-    default: 'dotnetVersion8'
-    values:
-    - 'dotnetVersion8'
 
 
 pool: DEFRA-COMMON-ubuntu2004-SSV3
@@ -34,11 +27,7 @@ variables:
 steps:
   - script: |
       dotnet --list-sdks
-      if [ "${{ parameters.dotnetVersion }}" == "dotnetVersion8" ]; then
         echo '{"sdk":{"version":"8.0.303","rollForward":"latestFeature","allowPrerelease":false}}' > ${{ parameters.solutionFolder }}/global.json
-        cat ${{ parameters.solutionFolder }}/global.json
-      else
-        echo '{"sdk":{"version":"6.0.424","rollForward":"latestFeature","allowPrerelease":false}}' > ${{ parameters.solutionFolder }}/global.json
         cat ${{ parameters.solutionFolder }}/global.json
       fi
 
