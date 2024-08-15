@@ -10,17 +10,24 @@ trigger:
     - 'src/EPR.Common/EPR.Common.Authorization/'
     - 'src/EPR.Common/EPR.Common.Functions/'
 
+parameters:
+  - name: solutionFolder
+    default: 'src/EPR.Common/'
+    values:
+    - 'src/EPR.Common/'
+
 pool: DEFRA-COMMON-ubuntu2004-SSV3
 
 variables:
   NUGET_ENABLE_LEGACY_CSPROJ_PACK: true
   NUGET_PACKAGES: $(Pipeline.Workspace)/.nuget/packages
 
+
 steps:
-  - task: UseDotNet@2
-    displayName: 'Use .NET Core 8'
-    inputs:
-      version: 8.0.x
+  - script: |
+      dotnet --list-sdks
+        echo '{"sdk":{"version":"8.0.303","rollForward":"latestFeature","allowPrerelease":false}}' > ${{ parameters.solutionFolder }}/global.json
+        cat ${{ parameters.solutionFolder }}/global.json
 
   - template: templates/template-build-test.yaml
     parameters:
