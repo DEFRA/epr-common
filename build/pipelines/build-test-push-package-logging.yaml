@@ -10,6 +10,11 @@ trigger:
     - 'src/EPR.Common/EPR.Common.Authorization/'
     - 'src/EPR.Common/EPR.Common.Functions/'
 
+Peramaters:
+  - name: dotnetVersion
+    value: dotnetVersion8
+
+
 pool: DEFRA-COMMON-ubuntu2004-SSV3
 
 variables:
