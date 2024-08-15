@@ -22,11 +22,6 @@ variables:
   NUGET_ENABLE_LEGACY_CSPROJ_PACK: true
   NUGET_PACKAGES: $(Pipeline.Workspace)/.nuget/packages
 
-#steps:
-#  - task: UseDotNet@2
-#    displayName: 'Use .NET Core 8'
-#    inputs:
-#      version: 8.0.x
 
 steps:
   - script: |
