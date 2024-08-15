@@ -12,7 +12,15 @@ trigger:
 
 parameters:
   - name: solutionFolder
-    value: src/EPR.Common/
+    default: 'src/EPR.Common/'
+    values:
+    - 'src/EPR.Common/'
+
+  - name: dotnetVersion
+    type: string
+    default: 'dotnetVersion8'
+    values:
+    - 'dotnetVersion8'
 
 pool: DEFRA-COMMON-ubuntu2004-SSV3
 
