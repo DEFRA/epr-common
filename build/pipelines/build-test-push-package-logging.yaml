@@ -16,12 +16,6 @@ parameters:
     values:
     - 'src/EPR.Common/'
 
-  - name: dotnetVersion
-    type: string
-    default: 'dotnetVersion8'
-    values:
-    - 'dotnetVersion8'
-
 pool: DEFRA-COMMON-ubuntu2004-SSV3
 
 variables:
@@ -39,7 +33,6 @@ steps:
       dotnet --list-sdks
         echo '{"sdk":{"version":"8.0.303","rollForward":"latestFeature","allowPrerelease":false}}' > ${{ parameters.solutionFolder }}/global.json
         cat ${{ parameters.solutionFolder }}/global.json
-      fi
 
   - template: templates/template-build-test.yaml
     parameters:
