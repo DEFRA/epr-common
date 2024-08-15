@@ -10,7 +10,8 @@ trigger:
     - 'src/EPR.Common/EPR.Common.Authorization/'
     - 'src/EPR.Common/EPR.Common.Functions/'
 
-
+parameters:
+  solutionFolder: src/EPR.Common/
 
 pool: DEFRA-COMMON-ubuntu2004-SSV3
 
