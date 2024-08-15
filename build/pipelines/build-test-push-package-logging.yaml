@@ -11,7 +11,8 @@ trigger:
     - 'src/EPR.Common/EPR.Common.Functions/'
 
 parameters:
-  solutionFolder: src/EPR.Common/
+  - name: solutionFolder
+    value: src/EPR.Common/
 
 pool: DEFRA-COMMON-ubuntu2004-SSV3
 
