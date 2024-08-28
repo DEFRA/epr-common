@@ -15,7 +15,9 @@
         private IRefreshTokenGenerator refreshTokenGenerator;
         private IJwtAuthenticationManager authenticationManager;
         private IJwtTokenRefresher tokenRefresher;
-        private string key = "This is my private key";
+
+        // .net8 requires a longer key
+        private string key = "This is my private key This is my private key This is my private key";
         private int tokenExpiryOffset = 10;
 
         [TestInitialize]
