@@ -70,11 +70,16 @@ public static class ServiceCollectionExtensions
                 options.AddPolicy(
                     PolicyConstants.RegulatorAdminPolicy,
                     policy => policy.Requirements.Add(new RegulatorAdminPolicyRequirement()));
+
+                options.AddPolicy(
+                   PolicyConstants.AccountPermissionManagementPolicy,
+                   policy => policy.Requirements.Add(new AccountPermissionManagementPolicyRequirement()));
             })
             .AddScoped<IAuthorizationHandler, EprSelectSchemePolicyHandler<T>>()
             .AddScoped<IAuthorizationHandler, EprFileUploadPolicyHandler<T>>()
             .AddScoped<IAuthorizationHandler, EprNonRegulatorRolesPolicyHandler<T>>()
             .AddScoped<IAuthorizationHandler, AccountManagementPolicyHandler<T>>()
+            .AddScoped<IAuthorizationHandler, AccountPermissionManagementPolicyHandler<T>>()
             .AddScoped<IAuthorizationHandler, RegulatorBasicPolicyHandler<T>>()
             .AddScoped<IAuthorizationHandler, RegulatorAdminPolicyHandler<T>>()
             .AddHttpClient(FacadeConstants.FacadeAPIClient, client =>

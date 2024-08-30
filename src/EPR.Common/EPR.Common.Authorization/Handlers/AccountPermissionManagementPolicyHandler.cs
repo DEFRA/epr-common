@@ -9,21 +9,21 @@ using Microsoft.Extensions.Options;
 using Requirements;
 using Sessions;
 
-public sealed class AccountManagementPolicyHandler<TSessionType>
-    : PolicyHandlerBase<AccountManagementPolicyRequirement, TSessionType>
+public sealed class AccountPermissionManagementPolicyHandler<TSessionType>
+    : PolicyHandlerBase<AccountPermissionManagementPolicyRequirement, TSessionType>
     where TSessionType : class, IHasUserData, new()
 {
-    public AccountManagementPolicyHandler(
+    public AccountPermissionManagementPolicyHandler(
         ISessionManager<TSessionType> sessionManager,
         IHttpClientFactory httpClientFactory,
         IOptions<EprAuthorizationConfig> options,
-        ILogger<AccountManagementPolicyHandler<TSessionType>> logger)
+        ILogger<AccountPermissionManagementPolicyHandler<TSessionType>> logger)
         : base(sessionManager, httpClientFactory, options, logger)
     {
     }
 
-    protected override string PolicyHandlerName => nameof(AccountManagementPolicyHandler<TSessionType>);
-    protected override string PolicyDescription => "manage users";
+    protected override string PolicyHandlerName => nameof(AccountPermissionManagementPolicyHandler<TSessionType>);
+    protected override string PolicyDescription => "manage permissions";
     protected override Func<ClaimsPrincipal, bool> IsUserAllowed =>
-        ClaimsPrincipleHelper.IsEnrolledAdminOrBasic;
+        ClaimsPrincipleHelper.IsEnrolledAdmin;
 }
