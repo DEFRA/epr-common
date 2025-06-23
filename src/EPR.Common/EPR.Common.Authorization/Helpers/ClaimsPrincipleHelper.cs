@@ -117,5 +117,21 @@ public static class ClaimsPrincipleHelper
                (userData.EnrolmentStatus == EnrolmentStatuses.Approved
                 || userData.EnrolmentStatus == EnrolmentStatuses.Enrolled
                 || userData.EnrolmentStatus == EnrolmentStatuses.Pending);
-    }
+	}
+
+	public static bool IsReExAdminOrApprovedPerson(ClaimsPrincipal claimsPrinciple)
+	{
+		var userDataClaim = claimsPrinciple.Claims.FirstOrDefault(c => c.Type == ClaimTypes.UserData);
+
+		if (userDataClaim == null)
+		{
+			return false;
+		}
+		var userData = JsonSerializer.Deserialize<UserData>(userDataClaim.Value);
+
+		return userData?.ServiceRole is ServiceRoles.ReExAdminUser || userData?.ServiceRole is ServiceRoles.ReExApprovedPerson &&
+			   (userData.EnrolmentStatus == EnrolmentStatuses.Approved
+				|| userData.EnrolmentStatus == EnrolmentStatuses.Enrolled
+				|| userData.EnrolmentStatus == EnrolmentStatuses.Pending);
+	}
 }

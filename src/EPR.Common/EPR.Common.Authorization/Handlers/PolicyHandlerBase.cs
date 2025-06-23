@@ -30,7 +30,8 @@ public abstract class PolicyHandlerBase<TPolicyRequirement, TSessionType>
         ISessionManager<TSessionType> sessionManager,
         IHttpClientFactory httpClientFactory,
         IOptions<EprAuthorizationConfig> options,
-        ILogger<PolicyHandlerBase<TPolicyRequirement, TSessionType>> logger)
+        ILogger<PolicyHandlerBase<TPolicyRequirement, TSessionType>> logger,
+        string serviceKey = null)
     {
         _sessionManager = sessionManager;
         _httpClientFactory = httpClientFactory;
