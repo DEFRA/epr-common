@@ -49,6 +49,7 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
 		var config = new EprAuthorizationConfig
 		{
 			FacadeUserAccountEndpoint = "endpoint",
+			FacadeUserAccountV1Endpoint = "v1endpoint",
 			FacadeBaseUrl = "http://localhost"
 		};
 		_optionsMock.Setup(x => x.Value).Returns(config);
@@ -88,6 +89,7 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
         var config = new EprAuthorizationConfig
         {
             FacadeUserAccountEndpoint = "endpoint",
+            FacadeUserAccountV1Endpoint = "v1endpoint",
             FacadeBaseUrl = "http://localhost",
             SignInRedirect = signInRedirectValue
         };
