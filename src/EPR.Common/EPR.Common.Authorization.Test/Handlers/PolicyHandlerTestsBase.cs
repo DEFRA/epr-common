@@ -41,49 +41,49 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
     protected Mock<HttpResponse> HttpResponseMock { get; } = new();
 
     protected void SetUp()
-    {
-        _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+	{
+		_fixture.Behaviors.Add(new OmitOnRecursionBehavior());
 
-        _httpMessageHandlerMock = new();
+		_httpMessageHandlerMock = new();
 
-        var config = new EprAuthorizationConfig
-        {
-            FacadeUserAccountEndpoint = "endpoint",
-            FacadeBaseUrl = "http://localhost"
-        };
-        _optionsMock.Setup(x => x.Value).Returns(config);
+		var config = new EprAuthorizationConfig
+		{
+			FacadeUserAccountEndpoint = "endpoint",
+			FacadeBaseUrl = "http://localhost"
+		};
+		_optionsMock.Setup(x => x.Value).Returns(config);
 
-        _httpClient = new HttpClient(_httpMessageHandlerMock.Object);
-        _httpClient.BaseAddress = new Uri(config.FacadeBaseUrl);
-        _httpClientFactory.Setup(x => x.CreateClient("FacadeAPIClient"))
-            .Returns(_httpClient);
+		_httpClient = new HttpClient(_httpMessageHandlerMock.Object);
+		_httpClient.BaseAddress = new Uri(config.FacadeBaseUrl);
+		_httpClientFactory.Setup(x => x.CreateClient("FacadeAPIClient"))
+			.Returns(_httpClient);
 
-        _authenticationServiceMock
-            .Setup(x => x.SignInAsync(
-                It.IsAny<HttpContext>(),
-                It.IsAny<string>(),
-                It.IsAny<ClaimsPrincipal>(),
-                It.IsAny<AuthenticationProperties>()))
-            .Returns(Task.CompletedTask);
+		_authenticationServiceMock
+			.Setup(x => x.SignInAsync(
+				It.IsAny<HttpContext>(),
+				It.IsAny<string>(),
+				It.IsAny<ClaimsPrincipal>(),
+				It.IsAny<AuthenticationProperties>()))
+			.Returns(Task.CompletedTask);
 
-        var serviceProviderMock = new Mock<IServiceProvider>();
-        serviceProviderMock
-            .Setup(x => x.GetService(typeof(IAuthenticationService)))
-            .Returns(_authenticationServiceMock.Object);
+		var serviceProviderMock = new Mock<IServiceProvider>();
+		serviceProviderMock
+			.Setup(x => x.GetService(typeof(IAuthenticationService)))
+			.Returns(_authenticationServiceMock.Object);
 
-        _httpContextMock.SetupGet(x => x.RequestServices).Returns(serviceProviderMock.Object);
+		_httpContextMock.SetupGet(x => x.RequestServices).Returns(serviceProviderMock.Object);
 
-        _policyHandler = Activator.CreateInstance(
-            typeof(TPolicyHandler),
-            _sessionManagerMock.Object,
-            _httpClientFactory.Object,
-            _optionsMock.Object,
-            NullLogger<TPolicyHandler>.Instance) as TPolicyHandler;
+		_policyHandler = Activator.CreateInstance(
+				typeof(TPolicyHandler),
+				_sessionManagerMock.Object,
+				_httpClientFactory.Object,
+				_optionsMock.Object,
+				NullLogger<TPolicyHandler>.Instance) as TPolicyHandler;
 
-        Assert.IsNotNull(_policyHandler);
-    }
+		Assert.IsNotNull(_policyHandler);
+	}
 
-    protected void SetupSignInRedirect(string signInRedirectValue)
+	protected void SetupSignInRedirect(string signInRedirectValue)
     {
         var config = new EprAuthorizationConfig
         {
@@ -95,21 +95,22 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
         _optionsMock.Setup(options => options.Value).Returns(config);
         _httpContextMock.SetupGet(context => context.Response).Returns(HttpResponseMock.Object);
 
-        _policyHandler = Activator.CreateInstance(
-            typeof(TPolicyHandler),
-            _sessionManagerMock.Object,
-            _httpClientFactory.Object,
-            _optionsMock.Object,
-            NullLogger<TPolicyHandler>.Instance) as TPolicyHandler;
-    }
+		_policyHandler = Activator.CreateInstance(
+				typeof(TPolicyHandler),
+				_sessionManagerMock.Object,
+				_httpClientFactory.Object,
+				_optionsMock.Object,
+				NullLogger<TPolicyHandler>.Instance) as TPolicyHandler;
+	}
 
-    protected async Task HandleRequirementAsync_Succeeds_WhenUserHasRolesInClaim(
+	protected async Task HandleRequirementAsync_Succeeds_WhenUserHasRolesInClaim(
         string serviceRole, string roleInOrganisation, string enrolmentStatus)
     {
         // Arrange
         var userData = _fixture.Build<UserData>()
             .With(x => x.ServiceRole, serviceRole)
-            .With(x => x.RoleInOrganisation, roleInOrganisation)
+			.With(x => x.ServiceRoleKey, serviceRole)
+			.With(x => x.RoleInOrganisation, roleInOrganisation)
             .With(x => x.EnrolmentStatus, enrolmentStatus)
             .Create();
 
@@ -145,7 +146,7 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
         // Arrange
         var userData = _fixture.Build<UserData>()
             .With(x => x.ServiceRole, serviceRole)
-            .With(x => x.RoleInOrganisation, roleInOrganisation)
+			.With(x => x.RoleInOrganisation, roleInOrganisation)
             .With(x => x.EnrolmentStatus, enrolmentStatus)
             .Create();
 
@@ -254,7 +255,15 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
             _httpContextMock.Object);
 
         var mySession = new MySession
-            { UserData = new UserData { ServiceRole = serviceRole, RoleInOrganisation = roleInOrganisation, EnrolmentStatus = enrolmentStatus} };
+        {
+            UserData = new UserData
+            {
+                ServiceRole = serviceRole,
+                ServiceRoleKey = serviceRole,
+				RoleInOrganisation = roleInOrganisation,
+                EnrolmentStatus = enrolmentStatus
+            }
+        };
         _sessionManagerMock.Setup(x => x.GetSessionAsync(It.IsAny<ISession>())).ReturnsAsync(mySession);
 
         // Act
@@ -325,7 +334,20 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
             .ReturnsAsync((MySession)null!);
 
         var userData = new UserData
-            { ServiceRole = serviceRole, RoleInOrganisation = roleInOrganisation, EnrolmentStatus = enrolmentStatus };
+        { 
+            ServiceRole = serviceRole,
+            ServiceRoleKey = serviceRole,
+			RoleInOrganisation = roleInOrganisation,
+            EnrolmentStatus = enrolmentStatus,
+            Organisations = new List<Organisation>
+            {
+                new Organisation
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Test Organisation"
+                }
+			}
+		};
 
         _httpMessageHandlerMock
             .Protected()

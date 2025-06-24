@@ -129,9 +129,6 @@ public static class ClaimsPrincipleHelper
 		}
 		var userData = JsonSerializer.Deserialize<UserData>(userDataClaim.Value);
 
-		return userData?.ServiceRole is ServiceRoles.ReExAdminUser || userData?.ServiceRole is ServiceRoles.ReExApprovedPerson &&
-			   (userData.EnrolmentStatus == EnrolmentStatuses.Approved
-				|| userData.EnrolmentStatus == EnrolmentStatuses.Enrolled
-				|| userData.EnrolmentStatus == EnrolmentStatuses.Pending);
+		return userData?.ServiceRoleKey is ServiceRoleKeys.ReExAdminUser || userData?.ServiceRoleKey is ServiceRoleKeys.ReExApprovedPerson;
 	}
 }

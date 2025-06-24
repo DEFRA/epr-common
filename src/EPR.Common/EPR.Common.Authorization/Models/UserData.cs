@@ -16,7 +16,9 @@ public class UserData
 
     public string ServiceRole { get; set; }
 
-    public string Service { get; set; }
+	public string ServiceRoleKey { get; set; }
+
+	public string Service { get; set; }
     
     public int ServiceRoleId { get; set; }
 

@@ -8,9 +8,11 @@ public class EprAuthorizationConfig
 
     public string FacadeUserAccountEndpoint { get; set; } = string.Empty;
 
-	public string FacadeUserAccountWithEnrolmentsEndpoint { get; set; } = string.Empty;
+	public string FacadeUserAccountV1Endpoint { get; set; } = string.Empty;
 
 	public string FacadeDownStreamScope { get; set; } = string.Empty;
 
     public string SignInRedirect { get; set; } = string.Empty;
+
+    public string ServiceKey { get; set; } = string.Empty;
 }

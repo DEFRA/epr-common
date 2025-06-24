@@ -25,8 +25,9 @@ public abstract class PolicyHandlerBase<TPolicyRequirement, TSessionType>
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly EprAuthorizationConfig _config;
     private readonly ILogger<PolicyHandlerBase<TPolicyRequirement, TSessionType>> _logger;
+    private readonly string _serviceKey;
 
-    protected PolicyHandlerBase(
+	protected PolicyHandlerBase(
         ISessionManager<TSessionType> sessionManager,
         IHttpClientFactory httpClientFactory,
         IOptions<EprAuthorizationConfig> options,
@@ -37,7 +38,8 @@ public abstract class PolicyHandlerBase<TPolicyRequirement, TSessionType>
         _httpClientFactory = httpClientFactory;
         _config = options.Value;
         _logger = logger;
-    }
+        _serviceKey = serviceKey ?? _config.ServiceKey;
+	}
 
     protected abstract string PolicyHandlerName { get; }
     protected abstract string PolicyDescription { get; }
@@ -83,35 +85,86 @@ public abstract class PolicyHandlerBase<TPolicyRequirement, TSessionType>
             _logger.LogError(e, "Error in {PolicyHandler} for user {UserId}",
                 PolicyHandlerName, context.User.UserId());
         }
-    }
+	}
 
-    private async Task<bool> CheckDatabase(
-        AuthorizationHandlerContext context,
-        TPolicyRequirement requirement,
-        TSessionType session,
-        HttpContext httpContext)
-    {
-        using var httpClient = _httpClientFactory.CreateClient(FacadeConstants.FacadeAPIClient);
-        var dbResponse = await httpClient.GetFromJsonAsync<UserOrganisations>(_config.FacadeUserAccountEndpoint);
-        if (dbResponse == null)
-            return false;
+	private async Task<bool> CheckDatabase(
+	AuthorizationHandlerContext context,
+	TPolicyRequirement requirement,
+	TSessionType session,
+	HttpContext httpContext)
+	{
+		UserOrganisations? dbResponse;
 
-        context.User.AddOrUpdateUserData(dbResponse.User);
-        session.UserData = dbResponse.User;
+		using var httpClient = _httpClientFactory.CreateClient(FacadeConstants.FacadeAPIClient);
 
-        await _sessionManager.SaveSessionAsync(httpContext.Session, session);
-        await UpdateClaimsAndSignInAsync(httpContext, dbResponse.User);
+		if (_serviceKey == ServiceKeys.ReprocessorExporter)
+		{
+			var endpoint = string.Format(_config.FacadeUserAccountV1Endpoint, _serviceKey);
+			dbResponse = await httpClient.GetFromJsonAsync<UserOrganisations>(endpoint);
 
-        if (!IsUserAllowed(context.User))
-            return false;
+			if (dbResponse?.User?.Organisations == null || !dbResponse.User.Organisations.Any())
+			{
+				_logger.LogWarning("User {UserId} has no organisations assigned", context.User.UserId());
+				return false;
+			}
 
-        context.Succeed(requirement);
-        _logger.LogInformation("User {UserId} has permission to {PolicyDescription}",
-            context.User.UserId(), PolicyDescription);
-        return true;
-    }
+			var organisation = dbResponse.User.Organisations[0];
 
-    private async Task<(bool InCache, TSessionType Session)> CheckCache(
+			MapUserDataFromOrganisation(dbResponse.User, organisation);
+		}
+		else
+		{
+			// Non Re-Ex flow
+			dbResponse = await httpClient.GetFromJsonAsync<UserOrganisations>(_config.FacadeUserAccountEndpoint);
+			if (dbResponse == null)
+				return false;
+		}
+
+		await UpdateUserSessionAndClaimsAsync(context, session, httpContext, dbResponse.User);
+		return FinalizeAuthorization(context, requirement);
+	}
+
+	private static void MapUserDataFromOrganisation(UserData userData, Organisation organisation)
+	{
+		userData.JobTitle = organisation.JobTitle;
+		userData.RoleInOrganisation = organisation.PersonRoleInOrganisation;
+		userData.IsChangeRequestPending = organisation.IsChangeRequestPending;
+
+		var enrolment = organisation.Enrolments?.LastOrDefault();
+		if (enrolment != null)
+		{
+			userData.Service = enrolment.Service;
+			userData.ServiceRoleId = enrolment.ServiceRoleId ?? 0;
+			userData.ServiceRole = enrolment.ServiceRole;
+			userData.ServiceRoleKey = enrolment.ServiceRoleKey;
+			userData.EnrolmentStatus = enrolment.EnrolmentStatus;
+		}
+	}
+
+	private async Task UpdateUserSessionAndClaimsAsync(
+	AuthorizationHandlerContext context,
+	TSessionType session,
+	HttpContext httpContext,
+	UserData user)
+	{
+		context.User.AddOrUpdateUserData(user);
+		session.UserData = user;
+
+		await _sessionManager.SaveSessionAsync(httpContext.Session, session);
+		await UpdateClaimsAndSignInAsync(httpContext, user);
+	}
+
+	private bool FinalizeAuthorization(AuthorizationHandlerContext context, TPolicyRequirement requirement)
+	{
+		if (!IsUserAllowed(context.User))
+			return false;
+
+		context.Succeed(requirement);
+		_logger.LogInformation("User {UserId} has permission to {PolicyDescription}", context.User.UserId(), PolicyDescription);
+		return true;
+	}
+
+	private async Task<(bool InCache, TSessionType Session)> CheckCache(
         AuthorizationHandlerContext context,
         TPolicyRequirement requirement,
         HttpContext httpContext)

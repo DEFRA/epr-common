@@ -74,7 +74,11 @@ public static class ServiceCollectionExtensions
                 options.AddPolicy(
                    PolicyConstants.AccountPermissionManagementPolicy,
                    policy => policy.Requirements.Add(new AccountPermissionManagementPolicyRequirement()));
-            })
+
+				options.AddPolicy(
+				   PolicyConstants.ReExAccountManagementPolicy,
+				   policy => policy.Requirements.Add(new ReExAccountManagementPolicyRequirement()));
+			})
             .AddScoped<IAuthorizationHandler, EprSelectSchemePolicyHandler<T>>()
             .AddScoped<IAuthorizationHandler, EprFileUploadPolicyHandler<T>>()
             .AddScoped<IAuthorizationHandler, EprNonRegulatorRolesPolicyHandler<T>>()
@@ -82,7 +86,8 @@ public static class ServiceCollectionExtensions
             .AddScoped<IAuthorizationHandler, AccountPermissionManagementPolicyHandler<T>>()
             .AddScoped<IAuthorizationHandler, RegulatorBasicPolicyHandler<T>>()
             .AddScoped<IAuthorizationHandler, RegulatorAdminPolicyHandler<T>>()
-            .AddHttpClient(FacadeConstants.FacadeAPIClient, client =>
+			.AddScoped<IAuthorizationHandler, ReExAccountManagementPolicyHandler<T>>()
+			.AddHttpClient(FacadeConstants.FacadeAPIClient, client =>
             {
                 client.BaseAddress =
                     new Uri(configuration.GetValue<string>(
