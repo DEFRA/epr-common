@@ -119,16 +119,35 @@ public static class ClaimsPrincipleHelper
                 || userData.EnrolmentStatus == EnrolmentStatuses.Pending);
 	}
 
-	public static bool IsReExAdminOrApprovedPerson(ClaimsPrincipal claimsPrinciple)
+	public static bool IsReExAdminOrApprovedPerson(ClaimsPrincipal claimsPrincipal)
 	{
-		var userDataClaim = claimsPrinciple.Claims.FirstOrDefault(c => c.Type == ClaimTypes.UserData);
-
-		if (userDataClaim == null)
+		var userDataClaim = claimsPrincipal.FindFirst(ClaimTypes.UserData)?.Value;
+		if (string.IsNullOrWhiteSpace(userDataClaim))
 		{
 			return false;
 		}
-		var userData = JsonSerializer.Deserialize<UserData>(userDataClaim.Value);
 
-		return userData?.ServiceRoleKey is ServiceRoleKeys.ReExAdminUser || userData?.ServiceRoleKey is ServiceRoleKeys.ReExApprovedPerson;
+		UserData? userData;
+		try
+		{
+			userData = JsonSerializer.Deserialize<UserData>(userDataClaim);
+		}
+		catch (JsonException)
+		{
+			return false;
+		}
+
+		var enrolments = userData?.Organisations?
+			.FirstOrDefault()?
+			.Enrolments;
+
+		if (enrolments == null || enrolments.Count == 0)
+		{
+			return false;
+		}
+
+		return enrolments.Any(e =>
+			e.ServiceRoleKey is ServiceRoleKeys.ReExAdminUser or ServiceRoleKeys.ReExApprovedPerson);
 	}
+
 }

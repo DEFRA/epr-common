@@ -107,10 +107,6 @@ public abstract class PolicyHandlerBase<TPolicyRequirement, TSessionType>
 				_logger.LogWarning("User {UserId} has no organisations assigned", context.User.UserId());
 				return false;
 			}
-
-			var organisation = dbResponse.User.Organisations[0];
-
-			MapUserDataFromOrganisation(dbResponse.User, organisation);
 		}
 		else
 		{
@@ -122,23 +118,6 @@ public abstract class PolicyHandlerBase<TPolicyRequirement, TSessionType>
 
 		await UpdateUserSessionAndClaimsAsync(context, session, httpContext, dbResponse.User);
 		return FinalizeAuthorization(context, requirement);
-	}
-
-	private static void MapUserDataFromOrganisation(UserData userData, Organisation organisation)
-	{
-		userData.JobTitle = organisation.JobTitle;
-		userData.RoleInOrganisation = organisation.PersonRoleInOrganisation;
-		userData.IsChangeRequestPending = organisation.IsChangeRequestPending;
-
-		var enrolment = organisation.Enrolments?.LastOrDefault();
-		if (enrolment != null)
-		{
-			userData.Service = enrolment.Service;
-			userData.ServiceRoleId = enrolment.ServiceRoleId ?? 0;
-			userData.ServiceRole = enrolment.ServiceRole;
-			userData.ServiceRoleKey = enrolment.ServiceRoleKey;
-			userData.EnrolmentStatus = enrolment.EnrolmentStatus;
-		}
 	}
 
 	private async Task UpdateUserSessionAndClaimsAsync(

@@ -81,6 +81,18 @@ public class ReExAccountManagementPolicyHandlerTests : PolicyHandlerTestsBase<Re
 		await HandleRequirementAsync_Fails_WhenUserDataIsRetrievedFromApiButUserRoleIsNotAuthorised(serviceRoleKey, roleInOrganisation, enrolmentStatus);
 
 	[TestMethod]
+	[DataRow(ServiceRoleKeys.ReExBasicUser, RoleInOrganisation.NotSet, EnrolmentStatuses.Enrolled)]
+	[DataRow(ServiceRoleKeys.ReExStandardUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
+	public async Task ReExAccountManagement_IsNotAuthorised_WhenUserDataIsRetrievedFromApiWithOutUserOrganisations(string serviceRoleKey, string roleInOrganisation, string enrolmentStatus) =>
+		await HandleRequirementAsync_Fails_WhenUserOrganisations_IsEmpty(serviceRoleKey, roleInOrganisation, enrolmentStatus);
+
+	[TestMethod]
+	[DataRow(ServiceRoleKeys.ReExBasicUser, RoleInOrganisation.NotSet, EnrolmentStatuses.Enrolled)]
+	[DataRow(ServiceRoleKeys.ReExStandardUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
+	public async Task ReExAccountManagement_IsNotAuthorised_WhenUserDataIsRetrievedFromApiWithOutOrganisationEnrolments(string serviceRoleKey, string roleInOrganisation, string enrolmentStatus) =>
+		await HandleRequirementAsync_Fails_WhenOrganisationEnrolments_IsEmpty(serviceRoleKey, roleInOrganisation, enrolmentStatus);
+
+	[TestMethod]
 	public async Task ReExAccountManagement_IsNotAuthorised_WhenApiCallFails() =>
 		await HandleRequirementAsync_Fails_WhenApiCallFails();
 }
