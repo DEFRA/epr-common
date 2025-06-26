@@ -85,6 +85,12 @@ public class ReExAccountManagementPolicyHandlerTests : PolicyHandlerTestsBase<Re
 	[DataRow(ServiceRoleKeys.ReExStandardUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
 	public async Task ReExAccountManagement_IsNotAuthorised_WhenUserDataIsRetrievedFromApiWithOutUserOrganisations(string serviceRoleKey, string roleInOrganisation, string enrolmentStatus) =>
 		await HandleRequirementAsync_Fails_WhenUserOrganisations_IsEmpty(serviceRoleKey, roleInOrganisation, enrolmentStatus);
+	
+	[TestMethod]
+	[DataRow(ServiceRoleKeys.ReExBasicUser, RoleInOrganisation.NotSet, EnrolmentStatuses.Enrolled)]
+	[DataRow(ServiceRoleKeys.ReExStandardUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
+	public async Task ReExAccountManagement_IsNotAuthorised_WhenUserDataIsRetrievedFromApiWithMultipleOrganisations(string serviceRoleKey, string roleInOrganisation, string enrolmentStatus) =>
+		await HandleRequirementAsync_Fails_WhenUserOrganisations_IsMoreThanOne(serviceRoleKey, roleInOrganisation, enrolmentStatus);
 
 	[TestMethod]
 	[DataRow(ServiceRoleKeys.ReExBasicUser, RoleInOrganisation.NotSet, EnrolmentStatuses.Enrolled)]

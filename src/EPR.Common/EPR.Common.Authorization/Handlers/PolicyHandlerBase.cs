@@ -107,6 +107,21 @@ public abstract class PolicyHandlerBase<TPolicyRequirement, TSessionType>
 				_logger.LogWarning("User {UserId} has no organisations assigned", context.User.UserId());
 				return false;
 			}
+
+			if (dbResponse.User.Organisations.Count > 1)
+			{
+                if (!string.IsNullOrEmpty(_config.SelectOrganisationRedirect))
+                {
+                    httpContext.Response.Redirect(_config.SelectOrganisationRedirect);
+                    return false;
+                }
+                else
+                {
+                    _logger.LogWarning("User {UserId} has multiple organisations assigned, but no redirect configured",
+                        context.User.UserId());
+                    return false;
+				}
+			}
 		}
 		else
 		{

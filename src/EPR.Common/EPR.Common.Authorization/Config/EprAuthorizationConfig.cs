@@ -14,5 +14,7 @@ public class EprAuthorizationConfig
 
     public string SignInRedirect { get; set; } = string.Empty;
 
-    public string ServiceKey { get; set; } = string.Empty;
+	public string SelectOrganisationRedirect { get; set; } = string.Empty;
+
+	public string ServiceKey { get; set; } = string.Empty;
 }

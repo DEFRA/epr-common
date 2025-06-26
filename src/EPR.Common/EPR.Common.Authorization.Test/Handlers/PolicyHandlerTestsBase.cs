@@ -559,6 +559,72 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
 		Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
 	}
 
+	protected async Task HandleRequirementAsync_Fails_WhenUserOrganisations_IsMoreThanOne(
+		string serviceRole, string roleInOrganisation, string enrolmentStatus)
+	{
+		// Arrange
+		var objectId = "12345678-1234-1234-1234-123456789012";
+		var claims = new[]
+		{
+			new Claim(ClaimConstants.ObjectId, objectId)
+		};
+
+		var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
+		var user = new ClaimsPrincipal(claimsIdentity);
+
+		var featureCollection = BuildFeatureCollection(user);
+		_httpContextMock.Setup(x => x.Features).Returns(featureCollection);
+		_httpContextMock.Setup(x => x.User).Returns(user);
+
+		var authorizationHandlerContext = new AuthorizationHandlerContext(
+			new List<IAuthorizationRequirement> { new TPolicyRequirement() },
+			user,
+			_httpContextMock.Object);
+
+		_sessionManagerMock
+			.Setup(x => x.GetSessionAsync(It.IsAny<ISession>()))
+			.ReturnsAsync((MySession)null!);
+
+		var userData = new UserData
+		{
+			ServiceRole = serviceRole,
+			RoleInOrganisation = roleInOrganisation,
+			EnrolmentStatus = enrolmentStatus,
+            Organisations = new List<Organisation>
+			{
+				new Organisation
+				{
+					Id = Guid.NewGuid(),
+					Name = "Test Organisation 1"
+				},
+				new Organisation
+				{
+					Id = Guid.NewGuid(),
+					Name = "Test Organisation 2"
+				}
+			}
+		};
+
+		_httpMessageHandlerMock
+			.Protected()
+			.Setup<Task<HttpResponseMessage>>(
+				"SendAsync",
+				ItExpr.IsAny<HttpRequestMessage>(),
+				ItExpr.IsAny<CancellationToken>())
+			.ReturnsAsync(new HttpResponseMessage
+			{
+				StatusCode = HttpStatusCode.OK,
+				Content = new StringContent(JsonSerializer.Serialize(new UserOrganisations { User = userData }))
+			})
+			.Verifiable();
+
+		// Act
+		await _policyHandler.HandleAsync(authorizationHandlerContext);
+
+		// Assert
+		Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
+	}
+
 	protected async Task HandleRequirementAsync_Fails_WhenOrganisationEnrolments_IsEmpty(
 		string serviceRole, string roleInOrganisation, string enrolmentStatus)
 	{

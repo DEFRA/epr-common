@@ -28,5 +28,7 @@ public class UserData
 
     public bool IsChangeRequestPending { get; set; }
 
-    public List<Organisation> Organisations { get; set; } = new();
+	public bool NumberOfOrganisations { get; set; }
+
+	public List<Organisation> Organisations { get; set; } = new();
 }
