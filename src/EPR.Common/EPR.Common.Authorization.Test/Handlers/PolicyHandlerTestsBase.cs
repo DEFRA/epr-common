@@ -590,8 +590,8 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
 			ServiceRole = serviceRole,
 			RoleInOrganisation = roleInOrganisation,
 			EnrolmentStatus = enrolmentStatus,
-            Organisations = new List<Organisation>
-			{
+            Organisations =
+			[
 				new Organisation
 				{
 					Id = Guid.NewGuid(),
@@ -602,7 +602,7 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
 					Id = Guid.NewGuid(),
 					Name = "Test Organisation 2"
 				}
-			}
+			]
 		};
 
 		_httpMessageHandlerMock
