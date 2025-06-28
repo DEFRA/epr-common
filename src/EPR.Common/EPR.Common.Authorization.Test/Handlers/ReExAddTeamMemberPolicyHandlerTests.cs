@@ -81,22 +81,16 @@ public class ReExAddTeamMemberPolicyHandlerTests : PolicyHandlerTestsBase<ReExAd
 		await HandleRequirementAsync_Fails_WhenUserDataIsRetrievedFromApiButUserRoleIsNotAuthorised(serviceRoleKey, roleInOrganisation, enrolmentStatus);
 
 	[TestMethod]
-	[DataRow(ServiceRoleKeys.ReExBasicUser, RoleInOrganisation.NotSet, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExStandardUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
-	public async Task ReExAddTeamMember_IsNotAuthorised_WhenUserDataIsRetrievedFromApiWithOutUserOrganisations(string serviceRoleKey, string roleInOrganisation, string enrolmentStatus) =>
-		await HandleRequirementAsync_Fails_WhenUserOrganisations_IsEmpty(serviceRoleKey, roleInOrganisation, enrolmentStatus);
+	public async Task ReExAddTeamMember_IsNotAuthorised_WhenUserDataIsRetrievedFromApiWithOutUserOrganisations() =>
+		await HandleRequirementAsync_Fails_WhenUserOrganisations_IsEmpty();
 	
 	[TestMethod]
-	[DataRow(ServiceRoleKeys.ReExBasicUser, RoleInOrganisation.NotSet, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExStandardUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
-	public async Task ReExAddTeamMember_IsNotAuthorised_WhenUserDataIsRetrievedFromApiWithMultipleOrganisations(string serviceRoleKey, string roleInOrganisation, string enrolmentStatus) =>
-		await HandleRequirementAsync_Fails_WhenUserOrganisations_IsMoreThanOne(serviceRoleKey, roleInOrganisation, enrolmentStatus);
+	public async Task ReExAddTeamMember_IsNotAuthorised_WhenUserDataIsRetrievedFromApiWithMultipleOrganisations() =>
+		await HandleRequirementAsync_Fails_WhenUserOrganisations_IsMoreThanOne();
 
 	[TestMethod]
-	[DataRow(ServiceRoleKeys.ReExBasicUser, RoleInOrganisation.NotSet, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExStandardUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
-	public async Task ReExAddTeamMember_IsNotAuthorised_WhenUserDataIsRetrievedFromApiWithOutOrganisationEnrolments(string serviceRoleKey, string roleInOrganisation, string enrolmentStatus) =>
-		await HandleRequirementAsync_Fails_WhenOrganisationEnrolments_IsEmpty(serviceRoleKey, roleInOrganisation, enrolmentStatus);
+	public async Task ReExAddTeamMember_IsNotAuthorised_WhenUserDataIsRetrievedFromApiWithOutOrganisationEnrolments() =>
+		await HandleRequirementAsync_Fails_WhenOrganisationEnrolments_IsEmpty();
 
 	[TestMethod]
 	public async Task ReExAddTeamMember_IsNotAuthorised_WhenApiCallFails() =>

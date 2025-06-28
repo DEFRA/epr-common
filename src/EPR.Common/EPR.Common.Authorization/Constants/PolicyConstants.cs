@@ -10,5 +10,5 @@ public static class PolicyConstants
     public const string RegulatorAdminPolicy = "RegulatorAdminPolicy";
     public const string AccountPermissionManagementPolicy = "AccountPermissionManagementPolicy";
 	public const string ReExAccountManagementPolicy = "ReExAccountManagementPolicy";
-
+	public const string ReExAddTeamMemberPolicy = "ReExAddTeamMemberPolicy";
 }

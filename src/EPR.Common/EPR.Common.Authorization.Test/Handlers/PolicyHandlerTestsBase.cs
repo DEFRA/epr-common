@@ -506,8 +506,7 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
         Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
     }
 
-	protected async Task HandleRequirementAsync_Fails_WhenUserOrganisations_IsEmpty(
-		string serviceRole, string roleInOrganisation, string enrolmentStatus)
+	protected async Task HandleRequirementAsync_Fails_WhenUserOrganisations_IsEmpty()
 	{
 		// Arrange
 		var objectId = "12345678-1234-1234-1234-123456789012";
@@ -531,13 +530,6 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
 		_sessionManagerMock
 			.Setup(x => x.GetSessionAsync(It.IsAny<ISession>()))
 			.ReturnsAsync((MySession)null!);
-
-		var userData = new UserData
-		{
-			ServiceRole = serviceRole,
-			RoleInOrganisation = roleInOrganisation,
-			EnrolmentStatus = enrolmentStatus
-        };
 
 		_httpMessageHandlerMock
 			.Protected()
@@ -548,7 +540,7 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
 			.ReturnsAsync(new HttpResponseMessage
 			{
 				StatusCode = HttpStatusCode.OK,
-				Content = new StringContent(JsonSerializer.Serialize(new UserOrganisations { User = userData }))
+				Content = new StringContent(JsonSerializer.Serialize(new UserOrganisations { User = new UserData() }))
 			})
 			.Verifiable();
 
@@ -559,8 +551,7 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
 		Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
 	}
 
-	protected async Task HandleRequirementAsync_Fails_WhenUserOrganisations_IsMoreThanOne(
-		string serviceRole, string roleInOrganisation, string enrolmentStatus)
+	protected async Task HandleRequirementAsync_Fails_WhenUserOrganisations_IsMoreThanOne()
 	{
 		// Arrange
 		var objectId = "12345678-1234-1234-1234-123456789012";
@@ -587,9 +578,6 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
 
 		var userData = new UserData
 		{
-			ServiceRole = serviceRole,
-			RoleInOrganisation = roleInOrganisation,
-			EnrolmentStatus = enrolmentStatus,
             Organisations =
 			[
 				new Organisation
@@ -625,8 +613,7 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
 		Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
 	}
 
-	protected async Task HandleRequirementAsync_Fails_WhenOrganisationEnrolments_IsEmpty(
-		string serviceRole, string roleInOrganisation, string enrolmentStatus)
+	protected async Task HandleRequirementAsync_Fails_WhenOrganisationEnrolments_IsEmpty()
 	{
 		// Arrange
 		var objectId = "12345678-1234-1234-1234-123456789012";
@@ -653,9 +640,6 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
 
 		var userData = new UserData
 		{
-			ServiceRole = serviceRole,
-			RoleInOrganisation = roleInOrganisation,
-			EnrolmentStatus = enrolmentStatus,
 			Organisations =
 			[
 				new Organisation

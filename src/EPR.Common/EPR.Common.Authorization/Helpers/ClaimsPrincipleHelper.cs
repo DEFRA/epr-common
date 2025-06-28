@@ -150,4 +150,38 @@ public static class ClaimsPrincipleHelper
 			e.ServiceRoleKey is ServiceRoleKeys.ReExAdminUser or ServiceRoleKeys.ReExApprovedPerson);
 	}
 
+	public static bool IsReprocessorExporter(ClaimsPrincipal claimsPrincipal)
+	{
+		var userDataClaim = claimsPrincipal.FindFirst(ClaimTypes.UserData)?.Value;
+		if (string.IsNullOrWhiteSpace(userDataClaim))
+		{
+			return false;
+		}
+
+		UserData? userData;
+		try
+		{
+			userData = JsonSerializer.Deserialize<UserData>(userDataClaim);
+		}
+		catch (JsonException)
+		{
+			return false;
+		}
+
+		var enrolments = userData?.Organisations?
+			.FirstOrDefault()?
+			.Enrolments;
+
+		if (enrolments == null || enrolments.Count == 0)
+		{
+			return false;
+		}
+
+		return enrolments.Any(e => e.ServiceRoleKey is
+                ServiceRoleKeys.ReExAdminUser or 
+                ServiceRoleKeys.ReExApprovedPerson or
+                ServiceRoleKeys.ReExDelegatedPerson or
+                ServiceRoleKeys.ReExStandardUser or
+                ServiceRoleKeys.ReExBasicUser);
+	}
 }
