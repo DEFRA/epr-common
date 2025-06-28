@@ -77,7 +77,7 @@ public static class ServiceCollectionExtensions
 
 				options.AddPolicy(
 				   PolicyConstants.ReExAccountManagementPolicy,
-				   policy => policy.Requirements.Add(new ReExAccountManagementPolicyRequirement()));
+				   policy => policy.Requirements.Add(new ReExAddTeamMemberRequirement()));
 			})
             .AddScoped<IAuthorizationHandler, EprSelectSchemePolicyHandler<T>>()
             .AddScoped<IAuthorizationHandler, EprFileUploadPolicyHandler<T>>()
@@ -86,7 +86,7 @@ public static class ServiceCollectionExtensions
             .AddScoped<IAuthorizationHandler, AccountPermissionManagementPolicyHandler<T>>()
             .AddScoped<IAuthorizationHandler, RegulatorBasicPolicyHandler<T>>()
             .AddScoped<IAuthorizationHandler, RegulatorAdminPolicyHandler<T>>()
-			.AddScoped<IAuthorizationHandler, ReExAccountManagementPolicyHandler<T>>()
+			.AddScoped<IAuthorizationHandler, ReExAddTeamMemberPolicyHandler<T>>()
 			.AddHttpClient(FacadeConstants.FacadeAPIClient, client =>
             {
                 client.BaseAddress =
