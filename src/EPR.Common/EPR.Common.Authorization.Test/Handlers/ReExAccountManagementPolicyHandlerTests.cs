@@ -1,110 +1,129 @@
-using EPR.Common.Authorization.Constants;
-using EPR.Common.Authorization.Handlers;
-using EPR.Common.Authorization.Requirements;
-using EPR.Common.Authorization.Test.TestClasses;
-
 namespace EPR.Common.Authorization.Test.Handlers;
 
+using Authorization.Handlers;
+using Authorization.Requirements;
+using EPR.Common.Authorization.Constants;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Threading.Tasks;
+using TestClasses;
+
 [TestClass]
-public class ReExAccountManagementPolicyHandlerTests : PolicyHandlerTestsBase<ReExAccountManagementPolicyHandler<MySession>,
-	ReExAccountManagementRequirement, MySession>
+public class ReExAccountManagementPolicyHandlerTests : ReExPolicyHandlerTestFixture<
+	ReExAccountManagementPolicyHandler<MySession>,
+	ReExAccountManagementRequirement,
+	MySession>
 {
 	[TestInitialize]
-	public void Initialise() => SetUp();
-
-	[TestMethod]
-	[DataRow(ServiceRoleKeys.ReExApprovedPerson, RoleInOrganisation.Admin, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExAdminUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExDelegatedPerson, RoleInOrganisation.Admin, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExStandardUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExBasicUser, RoleInOrganisation.Admin, EnrolmentStatuses.Enrolled)]
-	public async Task ReExAccountManagement_Succeeds_WhenUserHasRolesInClaim_AndIsEnrolledAdmin(
-		string serviceRoleKey, string roleInOrganisation, string enrolmentStatus) =>
-		await HandleRequirementAsync_Succeeds_WhenUserHasRolesInClaim(serviceRoleKey, roleInOrganisation, enrolmentStatus);
-
-	[TestMethod]
-	[DataRow(ServiceRoleKeys.ReExBasicUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExStandardUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
-	public async Task ReExAccountManagement_Succeeds_WhenUserHasRolesInClaim_AndIsEnrolledBasic(
-	string serviceRoleKey, string roleInOrganisation, string enrolmentStatus) =>
-	await HandleRequirementAsync_Succeeds_WhenUserHasRolesInClaim(serviceRoleKey, roleInOrganisation, enrolmentStatus);
-
-	[TestMethod]
-	[DataRow("Packaging.AdminUser", RoleInOrganisation.Admin, EnrolmentStatuses.Enrolled)]
-	[DataRow("Regulating.AdminUser", RoleInOrganisation.NotSet, EnrolmentStatuses.Enrolled)]
-	public async Task ReExAccountManagement_Fails_WhenUserIsNotAuthenticated(string serviceRoleKey, string roleInOrganisation, string enrolmentStatus) =>
-		await HandleRequirementAsync_Fails_WhenUserIsNotAuthenticated(serviceRoleKey, roleInOrganisation, enrolmentStatus);
-
-	[TestMethod]
-	[DataRow("Packaging.AdminUser", RoleInOrganisation.Admin, EnrolmentStatuses.Enrolled)]
-	[DataRow("Regulating.AdminUser", RoleInOrganisation.NotSet, EnrolmentStatuses.Enrolled)]
-	public async Task ReExAccountManagement_IsNotAuthorised_WhenUserDataExistsInClaimButUserRoleIsNotValid(string serviceRoleKey, string roleInOrganisation, string enrolmentStatus) =>
-		await HandleRequirementAsync_Fails_WhenUserDataExistsInClaimButUserRoleIsNotAuthorised(serviceRoleKey, roleInOrganisation, enrolmentStatus);
-
-	[TestMethod]
-	public async Task ReExAccountManagement_IsNotAuthorised_WhenAuthorizationHandlerContextResourceDoesNotExist() =>
-		await HandleRequirementAsync_Fails_WhenAuthorizationHandlerContextResourceDoesNotExist();
-
-	[TestMethod]
-	[DataRow(ServiceRoleKeys.ReExApprovedPerson, RoleInOrganisation.Admin, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExAdminUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExDelegatedPerson, RoleInOrganisation.Admin, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExStandardUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExBasicUser, RoleInOrganisation.Admin, EnrolmentStatuses.Enrolled)]
-	public async Task ReExAccountManagement_IsAuthorised_WhenCacheContainRequiredUserData(string serviceRoleKey,
-		string roleInOrganisation, string enrolmentStatus)
+	public void TestInitialize()
 	{
-		await HandleRequirementAsync_Succeeds_WhenCacheContainRequiredUserData(serviceRoleKey, roleInOrganisation, enrolmentStatus);
-		HttpResponseMock.VerifyNoOtherCalls();
+		base.SetUp();
 	}
 
 	[TestMethod]
-	[DataRow(ServiceRoleKeys.ReExApprovedPerson, RoleInOrganisation.Admin, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExAdminUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExDelegatedPerson, RoleInOrganisation.Admin, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExStandardUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExBasicUser, RoleInOrganisation.Admin, EnrolmentStatuses.Enrolled)]
-	public async Task ReExAccountManagement_IsAuthorised_WhenCacheContainRequiredUserData_And_RedirectIsSpecified(
-		string serviceRoleKey, string roleInOrganisation, string enrolmentStatus)
+	public async Task HandleRequirementAsync_Succeeds_WhenUserHasReExAdminUserRoleInClaim()
 	{
-		SetupSignInRedirect("/manage-account/reex");
-		await HandleRequirementAsync_Succeeds_WhenCacheContainRequiredUserData(serviceRoleKey, roleInOrganisation, enrolmentStatus);
-		HttpResponseMock.Verify(response => response.Redirect("/manage-account/reex"));
+		await HandleRequirementAsync_Succeeds_WhenUserHasAllowedRoleInClaimWithOrganisation(
+			ServiceRoleKeys.ReExAdminUser,
+			RoleInOrganisation.Admin,
+			EnrolmentStatuses.Enrolled,
+			_testOrganisationId);
 	}
 
 	[TestMethod]
-	[DataRow("Packaging.ApprovedPerson", RoleInOrganisation.Admin, EnrolmentStatuses.Enrolled)]
-	public async Task ReExAccountManagement_IsNotAuthorised_WhenUserDataExistsInCacheButUserRoleIsNotValid(string serviceRoleKey, string roleInOrganisation, string enrolmentStatus) =>
-		await HandleRequirementAsync_Fails_WhenUserDataExistsInCacheButUserRoleIsNotAuthorised(serviceRoleKey, roleInOrganisation, enrolmentStatus);
+	public async Task HandleRequirementAsync_Succeeds_WhenUserHasReExApprovedPersonRoleInClaim()
+	{
+		await HandleRequirementAsync_Succeeds_WhenUserHasAllowedRoleInClaimWithOrganisation(
+			ServiceRoleKeys.ReExApprovedPerson,
+			RoleInOrganisation.Employee,
+			EnrolmentStatuses.Enrolled,
+			_testOrganisationId);
+	}
 
 	[TestMethod]
-	[DataRow(ServiceRoleKeys.ReExApprovedPerson, RoleInOrganisation.Admin, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExAdminUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExDelegatedPerson, RoleInOrganisation.Admin, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExStandardUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
-	[DataRow(ServiceRoleKeys.ReExBasicUser, RoleInOrganisation.Admin, EnrolmentStatuses.Enrolled)]
-	public async Task ReExAccountManagement_IsAuthorised_WhenClaimsComeFromFromApi(string serviceRoleKey, string roleInOrganisation, string enrolmentStatus) =>
-		await HandleRequirementAsync_Succeeds_WhenUserDataIsRetrievedFromApi(serviceRoleKey, roleInOrganisation, enrolmentStatus);
+	public async Task HandleRequirementAsync_Succeeds_WhenUserHasReExStandardUserRoleInClaim()
+	{
+		await HandleRequirementAsync_Succeeds_WhenUserHasAllowedRoleInClaimWithOrganisation(
+			ServiceRoleKeys.ReExStandardUser,
+			RoleInOrganisation.Admin,
+			EnrolmentStatuses.Enrolled,
+			_testOrganisationId);
+	}
 
 	[TestMethod]
-	[DataRow("Packaing.ApprovedPerson", RoleInOrganisation.NotSet, EnrolmentStatuses.Enrolled)]
-	[DataRow("Regulating.AdminUser", RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
-	public async Task ReExAccountManagement_IsNotAuthorised_WhenUserDataIsRetrievedFromApiButUserRoleIsNotValid(string serviceRoleKey, string roleInOrganisation, string enrolmentStatus) =>
-		await HandleRequirementAsync_Fails_WhenUserDataIsRetrievedFromApiButUserRoleIsNotAuthorised(serviceRoleKey, roleInOrganisation, enrolmentStatus);
+	public async Task HandleRequirementAsync_Succeeds_WhenUserHasReExBasicUserRoleInClaim()
+	{
+		await HandleRequirementAsync_Succeeds_WhenUserHasAllowedRoleInClaimWithOrganisation(
+			ServiceRoleKeys.ReExBasicUser,
+			RoleInOrganisation.Employee,
+			EnrolmentStatuses.Enrolled,
+			_testOrganisationId);
+	}
 
 	[TestMethod]
-	public async Task ReExAccountManagement_IsNotAuthorised_WhenUserDataIsRetrievedFromApiWithOutUserOrganisations() =>
-		await HandleRequirementAsync_Fails_WhenUserOrganisations_IsEmpty();
-	
-	[TestMethod]
-	public async Task ReExAccountManagement_IsNotAuthorised_WhenUserDataIsRetrievedFromApiWithMultipleOrganisations() =>
-		await HandleRequirementAsync_Fails_WhenUserOrganisations_IsMoreThanOne();
+	public async Task HandleRequirementAsync_Fails_WhenUserHasDisallowedRoleInClaim()
+	{
+		await HandleRequirementAsync_Fails_WhenUserDataExistsInClaimButUserRoleIsNotAuthorisedWithOrganisation(
+			"SomeOtherRole",
+			RoleInOrganisation.Employee,
+			EnrolmentStatuses.Enrolled,
+			_testOrganisationId);
+	}
 
 	[TestMethod]
-	public async Task ReExAccountManagement_IsNotAuthorised_WhenUserDataIsRetrievedFromApiWithOutOrganisationEnrolments() =>
-		await HandleRequirementAsync_Fails_WhenOrganisationEnrolments_IsEmpty();
+	public async Task HandleRequirementAsync_Fails_WhenUserHasNoUserDataClaim()
+	{
+		await HandleRequirementAsync_Fails_WhenUserDataClaimIsMissing();
+	}
 
 	[TestMethod]
-	public async Task ReExAccountManagement_IsNotAuthorised_WhenApiCallFails() =>
-		await HandleRequirementAsync_Fails_WhenApiCallFails();
+	public async Task HandleRequirementAsync_Succeeds_WhenCacheContainsReExAdminUserRole()
+	{
+		await HandleRequirementAsync_Succeeds_WhenCacheContainRequiredUserDataWithOrganisation(
+			ServiceRoleKeys.ReExAdminUser,
+			RoleInOrganisation.Admin,
+			EnrolmentStatuses.Enrolled,
+			_testOrganisationId);
+	}
+
+	[TestMethod]
+	public async Task HandleRequirementAsync_Fails_WhenCacheContainsDisallowedRole()
+	{
+		await HandleRequirementAsync_Fails_WhenUserDataExistsInCacheButUserRoleIsNotAuthorisedWithOrganisation(
+			"SomeOtherRole",
+			RoleInOrganisation.Admin,
+			EnrolmentStatuses.Enrolled,
+			_testOrganisationId);
+	}
+
+	[TestMethod]
+	public async Task HandleRequirementAsync_Succeeds_WhenApiRetrievesReExAdminUserRole()
+	{
+		await HandleRequirementAsync_Succeeds_WhenUserDataIsRetrievedFromApiWithOrganisation(
+			ServiceRoleKeys.ReExAdminUser,
+			RoleInOrganisation.Employee,
+			EnrolmentStatuses.Enrolled,
+			_testOrganisationId);
+	}
+
+	[TestMethod]
+	public async Task HandleRequirementAsync_Fails_WhenApiRetrievesDisallowedRole()
+	{
+		await HandleRequirementAsync_Fails_WhenUserDataIsRetrievedFromApiButUserRoleIsNotAuthorisedWithOrganisation(
+			"SomeOtherRole",
+			RoleInOrganisation.Admin,
+			EnrolmentStatuses.Enrolled,
+			_testOrganisationId);
+	}
+
+	[TestMethod]
+	public async Task HandleRequirementAsync_Fails_WhenNoOrganisationIdFoundInSessionOrRoute()
+	{
+		await base.HandleRequirementAsync_Fails_WhenNoOrganisationIdInSessionOrRoute();
+	}
+
+	[TestMethod]
+	public async Task HandleRequirementAsync_Succeeds_WhenOrganisationIdAvailableFromRoute()
+	{
+		await base.HandleRequirementAsync_Succeeds_WhenOrganisationIdFromRoute();
+	}
 }

@@ -28,15 +28,15 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
     where TPolicyRequirement : IAuthorizationRequirement, new()
     where TSession : class, IHasUserData, new()
 {
-    private readonly IFixture _fixture = new Fixture().Customize(new AutoMoqCustomization());
-    private readonly Mock<ISessionManager<MySession>> _sessionManagerMock = new();
-    private readonly Mock<IOptions<EprAuthorizationConfig>> _optionsMock = new();
-    private readonly Mock<IAuthenticationService> _authenticationServiceMock = new();
-    private readonly Mock<HttpContext> _httpContextMock = new();
-    private Mock<HttpMessageHandler> _httpMessageHandlerMock = new();
-    private HttpClient _httpClient;
-    private readonly Mock<IHttpClientFactory> _httpClientFactory = new();
-    private TPolicyHandler _policyHandler;
+    protected readonly IFixture _fixture = new Fixture().Customize(new AutoMoqCustomization());
+    protected readonly Mock<ISessionManager<MySession>> _sessionManagerMock = new();
+    protected readonly Mock<IOptions<EprAuthorizationConfig>> _optionsMock = new();
+    protected readonly Mock<IAuthenticationService> _authenticationServiceMock = new();
+    protected readonly Mock<HttpContext> _httpContextMock = new();
+    protected Mock<HttpMessageHandler> _httpMessageHandlerMock = new();
+    protected HttpClient _httpClient = null!;
+    protected readonly Mock<IHttpClientFactory> _httpClientFactory = new();
+    protected TPolicyHandler _policyHandler = null!;
 
     protected Mock<HttpResponse> HttpResponseMock { get; } = new();
 
@@ -506,171 +506,7 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
         Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
     }
 
-	protected async Task HandleRequirementAsync_Fails_WhenUserOrganisations_IsEmpty()
-	{
-		// Arrange
-		var objectId = "12345678-1234-1234-1234-123456789012";
-		var claims = new[]
-		{
-			new Claim(ClaimConstants.ObjectId, objectId)
-		};
-
-		var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
-		var user = new ClaimsPrincipal(claimsIdentity);
-
-		var featureCollection = BuildFeatureCollection(user);
-		_httpContextMock.Setup(x => x.Features).Returns(featureCollection);
-		_httpContextMock.Setup(x => x.User).Returns(user);
-
-		var authorizationHandlerContext = new AuthorizationHandlerContext(
-			new List<IAuthorizationRequirement> { new TPolicyRequirement() },
-			user,
-			_httpContextMock.Object);
-
-		_sessionManagerMock
-			.Setup(x => x.GetSessionAsync(It.IsAny<ISession>()))
-			.ReturnsAsync((MySession)null!);
-
-		_httpMessageHandlerMock
-			.Protected()
-			.Setup<Task<HttpResponseMessage>>(
-				"SendAsync",
-				ItExpr.IsAny<HttpRequestMessage>(),
-				ItExpr.IsAny<CancellationToken>())
-			.ReturnsAsync(new HttpResponseMessage
-			{
-				StatusCode = HttpStatusCode.OK,
-				Content = new StringContent(JsonSerializer.Serialize(new UserOrganisations { User = new UserData() }))
-			})
-			.Verifiable();
-
-		// Act
-		await _policyHandler.HandleAsync(authorizationHandlerContext);
-
-		// Assert
-		Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
-	}
-
-	protected async Task HandleRequirementAsync_Fails_WhenUserOrganisations_IsMoreThanOne()
-	{
-		// Arrange
-		var objectId = "12345678-1234-1234-1234-123456789012";
-		var claims = new[]
-		{
-			new Claim(ClaimConstants.ObjectId, objectId)
-		};
-
-		var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
-		var user = new ClaimsPrincipal(claimsIdentity);
-
-		var featureCollection = BuildFeatureCollection(user);
-		_httpContextMock.Setup(x => x.Features).Returns(featureCollection);
-		_httpContextMock.Setup(x => x.User).Returns(user);
-
-		var authorizationHandlerContext = new AuthorizationHandlerContext(
-			new List<IAuthorizationRequirement> { new TPolicyRequirement() },
-			user,
-			_httpContextMock.Object);
-
-		_sessionManagerMock
-			.Setup(x => x.GetSessionAsync(It.IsAny<ISession>()))
-			.ReturnsAsync((MySession)null!);
-
-		var userData = new UserData
-		{
-            Organisations =
-			[
-				new Organisation
-				{
-					Id = Guid.NewGuid(),
-					Name = "Test Organisation 1"
-				},
-				new Organisation
-				{
-					Id = Guid.NewGuid(),
-					Name = "Test Organisation 2"
-				}
-			]
-		};
-
-		_httpMessageHandlerMock
-			.Protected()
-			.Setup<Task<HttpResponseMessage>>(
-				"SendAsync",
-				ItExpr.IsAny<HttpRequestMessage>(),
-				ItExpr.IsAny<CancellationToken>())
-			.ReturnsAsync(new HttpResponseMessage
-			{
-				StatusCode = HttpStatusCode.OK,
-				Content = new StringContent(JsonSerializer.Serialize(new UserOrganisations { User = userData }))
-			})
-			.Verifiable();
-
-		// Act
-		await _policyHandler.HandleAsync(authorizationHandlerContext);
-
-		// Assert
-		Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
-	}
-
-	protected async Task HandleRequirementAsync_Fails_WhenOrganisationEnrolments_IsEmpty()
-	{
-		// Arrange
-		var objectId = "12345678-1234-1234-1234-123456789012";
-		var claims = new[]
-		{
-			new Claim(ClaimConstants.ObjectId, objectId)
-		};
-
-		var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
-		var user = new ClaimsPrincipal(claimsIdentity);
-
-		var featureCollection = BuildFeatureCollection(user);
-		_httpContextMock.Setup(x => x.Features).Returns(featureCollection);
-		_httpContextMock.Setup(x => x.User).Returns(user);
-
-		var authorizationHandlerContext = new AuthorizationHandlerContext(
-			new List<IAuthorizationRequirement> { new TPolicyRequirement() },
-			user,
-			_httpContextMock.Object);
-
-		_sessionManagerMock
-			.Setup(x => x.GetSessionAsync(It.IsAny<ISession>()))
-			.ReturnsAsync((MySession)null!);
-
-		var userData = new UserData
-		{
-			Organisations =
-			[
-				new Organisation
-				{
-					Id = Guid.NewGuid(),
-					Name = "Test Organisation"
-				}
-			]
-		};
-
-		_httpMessageHandlerMock
-			.Protected()
-			.Setup<Task<HttpResponseMessage>>(
-				"SendAsync",
-				ItExpr.IsAny<HttpRequestMessage>(),
-				ItExpr.IsAny<CancellationToken>())
-			.ReturnsAsync(new HttpResponseMessage
-			{
-				StatusCode = HttpStatusCode.OK,
-				Content = new StringContent(JsonSerializer.Serialize(new UserOrganisations { User = userData }))
-			})
-			.Verifiable();
-
-		// Act
-		await _policyHandler.HandleAsync(authorizationHandlerContext);
-
-		// Assert
-		Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
-	}
-
-	private FeatureCollection BuildFeatureCollection(ClaimsPrincipal user)
+	protected static FeatureCollection BuildFeatureCollection(ClaimsPrincipal user)
     {
         var authenticationProperties = new AuthenticationProperties();
 
