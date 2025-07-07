@@ -40,7 +40,7 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
 
     protected Mock<HttpResponse> HttpResponseMock { get; } = new();
 
-    protected void SetUp()
+	protected void SetUp()
 	{
 		_fixture.Behaviors.Add(new OmitOnRecursionBehavior());
 
@@ -49,7 +49,6 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
 		var config = new EprAuthorizationConfig
 		{
 			FacadeUserAccountEndpoint = "endpoint",
-			FacadeUserAccountV1Endpoint = "v1endpoint",
 			FacadeBaseUrl = "http://localhost"
 		};
 		_optionsMock.Setup(x => x.Value).Returns(config);
@@ -75,34 +74,33 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
 		_httpContextMock.SetupGet(x => x.RequestServices).Returns(serviceProviderMock.Object);
 
 		_policyHandler = Activator.CreateInstance(
-				typeof(TPolicyHandler),
-				_sessionManagerMock.Object,
-				_httpClientFactory.Object,
-				_optionsMock.Object,
-				NullLogger<TPolicyHandler>.Instance) as TPolicyHandler;
+			typeof(TPolicyHandler),
+			_sessionManagerMock.Object,
+			_httpClientFactory.Object,
+			_optionsMock.Object,
+			NullLogger<TPolicyHandler>.Instance) as TPolicyHandler;
 
 		Assert.IsNotNull(_policyHandler);
 	}
 
 	protected void SetupSignInRedirect(string signInRedirectValue)
-    {
-        var config = new EprAuthorizationConfig
-        {
-            FacadeUserAccountEndpoint = "endpoint",
-            FacadeUserAccountV1Endpoint = "v1endpoint",
-            FacadeBaseUrl = "http://localhost",
-            SignInRedirect = signInRedirectValue
-        };
+	{
+		var config = new EprAuthorizationConfig
+		{
+			FacadeUserAccountEndpoint = "endpoint",
+			FacadeBaseUrl = "http://localhost",
+			SignInRedirect = signInRedirectValue
+		};
 
-        _optionsMock.Setup(options => options.Value).Returns(config);
-        _httpContextMock.SetupGet(context => context.Response).Returns(HttpResponseMock.Object);
+		_optionsMock.Setup(options => options.Value).Returns(config);
+		_httpContextMock.SetupGet(context => context.Response).Returns(HttpResponseMock.Object);
 
 		_policyHandler = Activator.CreateInstance(
-				typeof(TPolicyHandler),
-				_sessionManagerMock.Object,
-				_httpClientFactory.Object,
-				_optionsMock.Object,
-				NullLogger<TPolicyHandler>.Instance) as TPolicyHandler;
+			typeof(TPolicyHandler),
+			_sessionManagerMock.Object,
+			_httpClientFactory.Object,
+			_optionsMock.Object,
+			NullLogger<TPolicyHandler>.Instance) as TPolicyHandler;
 	}
 
 	protected async Task HandleRequirementAsync_Succeeds_WhenUserHasRolesInClaim(
@@ -113,22 +111,6 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
 			.With(x => x.ServiceRole, serviceRole)
 			.With(x => x.RoleInOrganisation, roleInOrganisation)
 			.With(x => x.EnrolmentStatus, enrolmentStatus)
-			.With(x => x.Organisations,
-			[
-				new Organisation
-				{
-					Id = Guid.NewGuid(),
-					Name = "Test Organisation",
-					Enrolments =
-					[
-						new Enrolment
-						{
-							ServiceRoleKey = serviceRole,
-							EnrolmentStatus = enrolmentStatus
-						}
-					]
-				}
-			])
 			.Create();
 
 		var objectId = "12345678-1234-1234-1234-123456789012";
@@ -157,366 +139,323 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
 		_sessionManagerMock.Verify(x => x.SaveSessionAsync(It.IsAny<ISession>(), It.IsAny<MySession>()), Times.Never);
 	}
 
-    protected async Task HandleRequirementAsync_Fails_WhenUserIsNotAuthenticated(
-        string serviceRole, string roleInOrganisation, string enrolmentStatus)
-    {
-        // Arrange
-        var userData = _fixture.Build<UserData>()
-            .With(x => x.ServiceRole, serviceRole)
+	protected async Task HandleRequirementAsync_Fails_WhenUserIsNotAuthenticated(
+		string serviceRole, string roleInOrganisation, string enrolmentStatus)
+	{
+		// Arrange
+		var userData = _fixture.Build<UserData>()
+			.With(x => x.ServiceRole, serviceRole)
 			.With(x => x.RoleInOrganisation, roleInOrganisation)
-            .With(x => x.EnrolmentStatus, enrolmentStatus)
-            .Create();
+			.With(x => x.EnrolmentStatus, enrolmentStatus)
+			.Create();
 
-        var objectId = "12345678-1234-1234-1234-123456789012";
-        var claims = new[]
-        {
-            new Claim(ClaimConstants.ObjectId, objectId),
-            new Claim(ClaimTypes.UserData, JsonSerializer.Serialize(userData))
-        };
-
-        var claimsIdentity = new ClaimsIdentity(claims);
-        var user = new ClaimsPrincipal(claimsIdentity);
-
-        _httpContextMock.SetupGet(x => x.User).Returns(user);
-
-        var authorizationHandlerContext = new AuthorizationHandlerContext(
-            new List<IAuthorizationRequirement> { new TPolicyRequirement() },
-            user,
-            _httpContextMock.Object);
-
-        // Act
-        await _policyHandler.HandleAsync(authorizationHandlerContext);
-
-        // Assert
-        Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
-    }
-
-    protected async Task HandleRequirementAsync_Fails_WhenUserDataExistsInClaimButUserRoleIsNotAuthorised(
-        string serviceRole, string roleInOrganisation, string enrolmentStatus)
-    {
-        // Arrange
-        var userData = _fixture.Build<UserData>()
-            .With(x => x.ServiceRole, serviceRole)
-            .With(x => x.RoleInOrganisation, roleInOrganisation)
-            .With(x => x.EnrolmentStatus, enrolmentStatus)
-            .Create();
-
-        var objectId = "12345678-1234-1234-1234-123456789012";
-        var claims = new[]
-        {
-            new Claim(ClaimConstants.ObjectId, objectId),
-            new Claim(ClaimTypes.UserData, JsonSerializer.Serialize(userData))
-        };
-
-        var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
-        var user = new ClaimsPrincipal(claimsIdentity);
-
-        _httpContextMock.SetupGet(x => x.User).Returns(user);
-
-        var authorizationHandlerContext = new AuthorizationHandlerContext(
-            new List<IAuthorizationRequirement> { new TPolicyRequirement() },
-            user,
-            _httpContextMock.Object);
-
-        // Act
-        await _policyHandler.HandleAsync(authorizationHandlerContext);
-
-        // Assert
-        Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
-    }
-
-    protected async Task HandleRequirementAsync_Fails_WhenAuthorizationHandlerContextResourceDoesNotExist()
-    {
-        // Arrange
-        var objectId = "12345678-1234-1234-1234-123456789012";
-        var claims = new[]
-        {
-            new Claim(ClaimConstants.ObjectId, objectId)
-        };
-
-        var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
-        var user = new ClaimsPrincipal(claimsIdentity);
-
-        var authorizationHandlerContext = new AuthorizationHandlerContext(
-            new List<IAuthorizationRequirement> { new TPolicyRequirement() },
-            user,
-            null);
-
-        // Act
-        await _policyHandler.HandleAsync(authorizationHandlerContext);
-
-        // Assert
-        Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
-    }
-
-    protected async Task HandleRequirementAsync_Succeeds_WhenCacheContainRequiredUserData(
-        string serviceRole, string roleInOrganisation, string enrolmentStatus)
-    {
-        // Arrange
-        var objectId = "12345678-1234-1234-1234-123456789012";
-        var claims = new[]
-        {
-            new Claim(ClaimConstants.ObjectId, objectId)
-        };
-
-        var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
-        var user = new ClaimsPrincipal(claimsIdentity);
-
-        var featureCollection = BuildFeatureCollection(user);
-        _httpContextMock.Setup(x => x.Features).Returns(featureCollection);
-        _httpContextMock.Setup(x => x.User).Returns(user);
-
-        var authorizationHandlerContext = new AuthorizationHandlerContext(
-            new List<IAuthorizationRequirement> { new TPolicyRequirement() },
-            user,
-            _httpContextMock.Object);
-
-        var mySession = new MySession
-        {
-            UserData = new UserData
-            {
-                ServiceRole = serviceRole,
-				RoleInOrganisation = roleInOrganisation,
-                EnrolmentStatus = enrolmentStatus,
-                Organisations =
-				[
-					new Organisation
-                    {
-                        Id = Guid.NewGuid(),
-                        Name = "Test Organisation",
-                        Enrolments =
-						[
-							new Enrolment
-                            {
-                                ServiceRoleKey = serviceRole,
-                                EnrolmentStatus = enrolmentStatus
-                            }
-						]
-					}
-				]
-			}
-        };
-        _sessionManagerMock.Setup(x => x.GetSessionAsync(It.IsAny<ISession>())).ReturnsAsync(mySession);
-
-        // Act
-        await _policyHandler.HandleAsync(authorizationHandlerContext);
-
-        // Assert
-        Assert.IsTrue(authorizationHandlerContext.HasSucceeded);
-        _sessionManagerMock.Verify(x => x.GetSessionAsync(It.IsAny<ISession>()), Times.Once);
-    }
-
-    protected async Task HandleRequirementAsync_Fails_WhenUserDataExistsInCacheButUserRoleIsNotAuthorised(
-        string serviceRole, string roleInOrganisation, string enrolmentStatus)
-    {
-        // Arrange
-        var objectId = "12345678-1234-1234-1234-123456789012";
-        var claims = new[]
-        {
-            new Claim(ClaimConstants.ObjectId, objectId)
-        };
-
-        var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
-        var user = new ClaimsPrincipal(claimsIdentity);
-
-        var featureCollection = BuildFeatureCollection(user);
-        _httpContextMock.Setup(x => x.Features).Returns(featureCollection);
-        _httpContextMock.Setup(x => x.User).Returns(user);
-
-        var authorizationHandlerContext = new AuthorizationHandlerContext(
-            new List<IAuthorizationRequirement> { new TPolicyRequirement() },
-            user,
-            _httpContextMock.Object);
-
-        var mySession = new MySession
-            { UserData = new UserData { ServiceRole = serviceRole, RoleInOrganisation = roleInOrganisation, EnrolmentStatus = enrolmentStatus} };
-        _sessionManagerMock.Setup(x => x.GetSessionAsync(It.IsAny<ISession>())).ReturnsAsync(mySession);
-
-        // Act
-        await _policyHandler.HandleAsync(authorizationHandlerContext);
-
-        // Assert
-        Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
-    }
-
-    protected async Task HandleRequirementAsync_Succeeds_WhenUserDataIsRetrievedFromApi(
-        string serviceRole, string roleInOrganisation, string enrolmentStatus)
-    {
-        // Arrange
-        var objectId = "12345678-1234-1234-1234-123456789012";
-        var claims = new[]
-        {
-            new Claim(ClaimConstants.ObjectId, objectId)
-        };
-
-        var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
-        var user = new ClaimsPrincipal(claimsIdentity);
-
-        var featureCollection = BuildFeatureCollection(user);
-        _httpContextMock.Setup(x => x.Features).Returns(featureCollection);
-        _httpContextMock.Setup(x => x.User).Returns(user);
-
-        var authorizationHandlerContext = new AuthorizationHandlerContext(
-            new List<IAuthorizationRequirement> { new TPolicyRequirement() },
-            user,
-            _httpContextMock.Object);
-
-        _sessionManagerMock
-            .Setup(x => x.GetSessionAsync(It.IsAny<ISession>()))
-            .ReturnsAsync((MySession)null!);
-
-        var userData = new UserData
-        { 
-            ServiceRole = serviceRole,
-			RoleInOrganisation = roleInOrganisation,
-            EnrolmentStatus = enrolmentStatus,
-            Organisations =
-			[
-				new Organisation
-                {
-                    Id = Guid.NewGuid(),
-                    Name = "Test Organisation",
-                    Enrolments =
-					[
-						new Enrolment
-                        {
-                            ServiceRoleKey = serviceRole,
-                            EnrolmentStatus = enrolmentStatus
-                        }
-					]
-				}
-			]
+		var objectId = "12345678-1234-1234-1234-123456789012";
+		var claims = new[]
+		{
+			new Claim(ClaimConstants.ObjectId, objectId),
+			new Claim(ClaimTypes.UserData, JsonSerializer.Serialize(userData))
 		};
 
-        _httpMessageHandlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(JsonSerializer.Serialize(new UserOrganisations { User = userData }))
-            })
-            .Verifiable();
+		var claimsIdentity = new ClaimsIdentity(claims);
+		var user = new ClaimsPrincipal(claimsIdentity);
 
-        // Act
-        await _policyHandler.HandleAsync(authorizationHandlerContext);
+		_httpContextMock.SetupGet(x => x.User).Returns(user);
 
-        // Assert
-        Assert.IsTrue(authorizationHandlerContext.HasSucceeded);
-        _sessionManagerMock.Verify(x => x.SaveSessionAsync(It.IsAny<ISession>(), It.IsAny<MySession>()), Times.Once);
-        _httpMessageHandlerMock.Protected().Verify(
-            "SendAsync",
-            Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
-            ItExpr.IsAny<CancellationToken>());
-    }
+		var authorizationHandlerContext = new AuthorizationHandlerContext(
+			new List<IAuthorizationRequirement> { new TPolicyRequirement() },
+			user,
+			_httpContextMock.Object);
 
-    protected async Task HandleRequirementAsync_Fails_WhenUserDataIsRetrievedFromApiButUserRoleIsNotAuthorised(
-        string serviceRole, string roleInOrganisation, string enrolmentStatus)
-    {
-         // Arrange
-        var objectId = "12345678-1234-1234-1234-123456789012";
-        var claims = new[]
-        {
-            new Claim(ClaimConstants.ObjectId, objectId)
-        };
+		// Act
+		await _policyHandler.HandleAsync(authorizationHandlerContext);
 
-        var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
-        var user = new ClaimsPrincipal(claimsIdentity);
+		// Assert
+		Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
+	}
 
-        var featureCollection = BuildFeatureCollection(user);
-        _httpContextMock.Setup(x => x.Features).Returns(featureCollection);
-        _httpContextMock.Setup(x => x.User).Returns(user);
+	protected async Task HandleRequirementAsync_Fails_WhenUserDataExistsInClaimButUserRoleIsNotAuthorised(
+		string serviceRole, string roleInOrganisation, string enrolmentStatus)
+	{
+		// Arrange
+		var userData = _fixture.Build<UserData>()
+			.With(x => x.ServiceRole, serviceRole)
+			.With(x => x.RoleInOrganisation, roleInOrganisation)
+			.With(x => x.EnrolmentStatus, enrolmentStatus)
+			.Create();
 
-        var authorizationHandlerContext = new AuthorizationHandlerContext(
-            new List<IAuthorizationRequirement> { new TPolicyRequirement() },
-            user,
-            _httpContextMock.Object);
+		var objectId = "12345678-1234-1234-1234-123456789012";
+		var claims = new[]
+		{
+			new Claim(ClaimConstants.ObjectId, objectId),
+			new Claim(ClaimTypes.UserData, JsonSerializer.Serialize(userData))
+		};
 
-        _sessionManagerMock
-            .Setup(x => x.GetSessionAsync(It.IsAny<ISession>()))
-            .ReturnsAsync((MySession)null!);
+		var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
+		var user = new ClaimsPrincipal(claimsIdentity);
 
-        var userData = new UserData
-            { ServiceRole = serviceRole, RoleInOrganisation = roleInOrganisation, EnrolmentStatus = enrolmentStatus };
+		_httpContextMock.SetupGet(x => x.User).Returns(user);
 
-        _httpMessageHandlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(JsonSerializer.Serialize(new UserOrganisations { User = userData }))
-            })
-            .Verifiable();
+		var authorizationHandlerContext = new AuthorizationHandlerContext(
+			new List<IAuthorizationRequirement> { new TPolicyRequirement() },
+			user,
+			_httpContextMock.Object);
 
-        // Act
-        await _policyHandler.HandleAsync(authorizationHandlerContext);
+		// Act
+		await _policyHandler.HandleAsync(authorizationHandlerContext);
 
-        // Assert
-        Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
-    }
+		// Assert
+		Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
+	}
 
-    protected async Task HandleRequirementAsync_Fails_WhenApiCallFails()
-    {
-        // Arrange
-        var objectId = "12345678-1234-1234-1234-123456789012";
-        var claims = new[]
-        {
-            new Claim(ClaimConstants.ObjectId, objectId)
-        };
-        var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
-        var user = new ClaimsPrincipal(claimsIdentity);
+	protected async Task HandleRequirementAsync_Fails_WhenAuthorizationHandlerContextResourceDoesNotExist()
+	{
+		// Arrange
+		var objectId = "12345678-1234-1234-1234-123456789012";
+		var claims = new[]
+		{
+			new Claim(ClaimConstants.ObjectId, objectId)
+		};
 
-        var featureCollection = BuildFeatureCollection(user);
-        _httpContextMock.Setup(x => x.Features).Returns(featureCollection);
-        _httpContextMock.Setup(x => x.User).Returns(user);
+		var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
+		var user = new ClaimsPrincipal(claimsIdentity);
 
-        var authorizationHandlerContext = new AuthorizationHandlerContext(
-            new List<IAuthorizationRequirement> { new TPolicyRequirement() },
-            user,
-            _httpContextMock.Object);
+		var authorizationHandlerContext = new AuthorizationHandlerContext(
+			new List<IAuthorizationRequirement> { new TPolicyRequirement() },
+			user,
+			null);
 
-        _sessionManagerMock
-            .Setup(x => x.GetSessionAsync(It.IsAny<ISession>()))
-            .ReturnsAsync((MySession)null!);
+		// Act
+		await _policyHandler.HandleAsync(authorizationHandlerContext);
 
-        _httpMessageHandlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.NotFound,
-            })
-            .Verifiable();
+		// Assert
+		Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
+	}
 
-        // Act
-        await _policyHandler.HandleAsync(authorizationHandlerContext);
+	protected async Task HandleRequirementAsync_Succeeds_WhenCacheContainRequiredUserData(
+		string serviceRole, string roleInOrganisation, string enrolmentStatus)
+	{
+		// Arrange
+		var objectId = "12345678-1234-1234-1234-123456789012";
+		var claims = new[]
+		{
+			new Claim(ClaimConstants.ObjectId, objectId)
+		};
 
-        // Assert
-        Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
-    }
+		var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
+		var user = new ClaimsPrincipal(claimsIdentity);
+
+		var featureCollection = BuildFeatureCollection(user);
+		_httpContextMock.Setup(x => x.Features).Returns(featureCollection);
+		_httpContextMock.Setup(x => x.User).Returns(user);
+
+		var authorizationHandlerContext = new AuthorizationHandlerContext(
+			new List<IAuthorizationRequirement> { new TPolicyRequirement() },
+			user,
+			_httpContextMock.Object);
+
+		var mySession = new MySession
+		{ UserData = new UserData { ServiceRole = serviceRole, RoleInOrganisation = roleInOrganisation, EnrolmentStatus = enrolmentStatus } };
+		_sessionManagerMock.Setup(x => x.GetSessionAsync(It.IsAny<ISession>())).ReturnsAsync(mySession);
+
+		// Act
+		await _policyHandler.HandleAsync(authorizationHandlerContext);
+
+		// Assert
+		Assert.IsTrue(authorizationHandlerContext.HasSucceeded);
+		_sessionManagerMock.Verify(x => x.GetSessionAsync(It.IsAny<ISession>()), Times.Once);
+	}
+
+	protected async Task HandleRequirementAsync_Fails_WhenUserDataExistsInCacheButUserRoleIsNotAuthorised(
+		string serviceRole, string roleInOrganisation, string enrolmentStatus)
+	{
+		// Arrange
+		var objectId = "12345678-1234-1234-1234-123456789012";
+		var claims = new[]
+		{
+			new Claim(ClaimConstants.ObjectId, objectId)
+		};
+
+		var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
+		var user = new ClaimsPrincipal(claimsIdentity);
+
+		var featureCollection = BuildFeatureCollection(user);
+		_httpContextMock.Setup(x => x.Features).Returns(featureCollection);
+		_httpContextMock.Setup(x => x.User).Returns(user);
+
+		var authorizationHandlerContext = new AuthorizationHandlerContext(
+			new List<IAuthorizationRequirement> { new TPolicyRequirement() },
+			user,
+			_httpContextMock.Object);
+
+		var mySession = new MySession
+		{ UserData = new UserData { ServiceRole = serviceRole, RoleInOrganisation = roleInOrganisation, EnrolmentStatus = enrolmentStatus } };
+		_sessionManagerMock.Setup(x => x.GetSessionAsync(It.IsAny<ISession>())).ReturnsAsync(mySession);
+
+		// Act
+		await _policyHandler.HandleAsync(authorizationHandlerContext);
+
+		// Assert
+		Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
+	}
+
+	protected async Task HandleRequirementAsync_Succeeds_WhenUserDataIsRetrievedFromApi(
+		string serviceRole, string roleInOrganisation, string enrolmentStatus)
+	{
+		// Arrange
+		var objectId = "12345678-1234-1234-1234-123456789012";
+		var claims = new[]
+		{
+			new Claim(ClaimConstants.ObjectId, objectId)
+		};
+
+		var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
+		var user = new ClaimsPrincipal(claimsIdentity);
+
+		var featureCollection = BuildFeatureCollection(user);
+		_httpContextMock.Setup(x => x.Features).Returns(featureCollection);
+		_httpContextMock.Setup(x => x.User).Returns(user);
+
+		var authorizationHandlerContext = new AuthorizationHandlerContext(
+			new List<IAuthorizationRequirement> { new TPolicyRequirement() },
+			user,
+			_httpContextMock.Object);
+
+		_sessionManagerMock
+			.Setup(x => x.GetSessionAsync(It.IsAny<ISession>()))
+			.ReturnsAsync((MySession)null!);
+
+		var userData = new UserData
+		{ ServiceRole = serviceRole, RoleInOrganisation = roleInOrganisation, EnrolmentStatus = enrolmentStatus };
+
+		_httpMessageHandlerMock
+			.Protected()
+			.Setup<Task<HttpResponseMessage>>(
+				"SendAsync",
+				ItExpr.IsAny<HttpRequestMessage>(),
+				ItExpr.IsAny<CancellationToken>())
+			.ReturnsAsync(new HttpResponseMessage
+			{
+				StatusCode = HttpStatusCode.OK,
+				Content = new StringContent(JsonSerializer.Serialize(new UserOrganisations { User = userData }))
+			})
+			.Verifiable();
+
+		// Act
+		await _policyHandler.HandleAsync(authorizationHandlerContext);
+
+		// Assert
+		Assert.IsTrue(authorizationHandlerContext.HasSucceeded);
+		_sessionManagerMock.Verify(x => x.SaveSessionAsync(It.IsAny<ISession>(), It.IsAny<MySession>()), Times.Once);
+		_httpMessageHandlerMock.Protected().Verify(
+			"SendAsync",
+			Times.Once(),
+			ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+			ItExpr.IsAny<CancellationToken>());
+	}
+
+	protected async Task HandleRequirementAsync_Fails_WhenUserDataIsRetrievedFromApiButUserRoleIsNotAuthorised(
+		string serviceRole, string roleInOrganisation, string enrolmentStatus)
+	{
+		// Arrange
+		var objectId = "12345678-1234-1234-1234-123456789012";
+		var claims = new[]
+		{
+			new Claim(ClaimConstants.ObjectId, objectId)
+		};
+
+		var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
+		var user = new ClaimsPrincipal(claimsIdentity);
+
+		var featureCollection = BuildFeatureCollection(user);
+		_httpContextMock.Setup(x => x.Features).Returns(featureCollection);
+		_httpContextMock.Setup(x => x.User).Returns(user);
+
+		var authorizationHandlerContext = new AuthorizationHandlerContext(
+			new List<IAuthorizationRequirement> { new TPolicyRequirement() },
+			user,
+			_httpContextMock.Object);
+
+		_sessionManagerMock
+			.Setup(x => x.GetSessionAsync(It.IsAny<ISession>()))
+			.ReturnsAsync((MySession)null!);
+
+		var userData = new UserData
+		{ ServiceRole = serviceRole, RoleInOrganisation = roleInOrganisation, EnrolmentStatus = enrolmentStatus };
+
+		_httpMessageHandlerMock
+			.Protected()
+			.Setup<Task<HttpResponseMessage>>(
+				"SendAsync",
+				ItExpr.IsAny<HttpRequestMessage>(),
+				ItExpr.IsAny<CancellationToken>())
+			.ReturnsAsync(new HttpResponseMessage
+			{
+				StatusCode = HttpStatusCode.OK,
+				Content = new StringContent(JsonSerializer.Serialize(new UserOrganisations { User = userData }))
+			})
+			.Verifiable();
+
+		// Act
+		await _policyHandler.HandleAsync(authorizationHandlerContext);
+
+		// Assert
+		Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
+	}
+
+	protected async Task HandleRequirementAsync_Fails_WhenApiCallFails()
+	{
+		// Arrange
+		var objectId = "12345678-1234-1234-1234-123456789012";
+		var claims = new[]
+		{
+			new Claim(ClaimConstants.ObjectId, objectId)
+		};
+		var claimsIdentity = new ClaimsIdentity(claims, "CustomAuthenticationType");
+		var user = new ClaimsPrincipal(claimsIdentity);
+
+		var featureCollection = BuildFeatureCollection(user);
+		_httpContextMock.Setup(x => x.Features).Returns(featureCollection);
+		_httpContextMock.Setup(x => x.User).Returns(user);
+
+		var authorizationHandlerContext = new AuthorizationHandlerContext(
+			new List<IAuthorizationRequirement> { new TPolicyRequirement() },
+			user,
+			_httpContextMock.Object);
+
+		_sessionManagerMock
+			.Setup(x => x.GetSessionAsync(It.IsAny<ISession>()))
+			.ReturnsAsync((MySession)null!);
+
+		_httpMessageHandlerMock
+			.Protected()
+			.Setup<Task<HttpResponseMessage>>(
+				"SendAsync",
+				ItExpr.IsAny<HttpRequestMessage>(),
+				ItExpr.IsAny<CancellationToken>())
+			.ReturnsAsync(new HttpResponseMessage
+			{
+				StatusCode = HttpStatusCode.NotFound,
+			})
+			.Verifiable();
+
+		// Act
+		await _policyHandler.HandleAsync(authorizationHandlerContext);
+
+		// Assert
+		Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
+	}
 
 	protected static FeatureCollection BuildFeatureCollection(ClaimsPrincipal user)
-    {
-        var authenticationProperties = new AuthenticationProperties();
+	{
+		var authenticationProperties = new AuthenticationProperties();
 
-        var authenticateResultFeatureMock = new Mock<IAuthenticateResultFeature>();
-        authenticateResultFeatureMock.SetupGet(x => x.AuthenticateResult)
-            .Returns(AuthenticateResult.Success(new AuthenticationTicket(user, authenticationProperties, "CustomAuthenticationType")));
+		var authenticateResultFeatureMock = new Mock<IAuthenticateResultFeature>();
+		authenticateResultFeatureMock.SetupGet(x => x.AuthenticateResult)
+			.Returns(AuthenticateResult.Success(new AuthenticationTicket(user, authenticationProperties, "CustomAuthenticationType")));
 
-        var featureCollection = new FeatureCollection();
-        featureCollection.Set(authenticateResultFeatureMock.Object);
+		var featureCollection = new FeatureCollection();
+		featureCollection.Set(authenticateResultFeatureMock.Object);
 
-        return featureCollection;
-    }
+		return featureCollection;
+	}
 }
