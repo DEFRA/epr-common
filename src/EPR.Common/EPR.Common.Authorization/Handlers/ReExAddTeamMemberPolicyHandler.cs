@@ -78,13 +78,13 @@ public sealed class ReExAddTeamMemberPolicyHandler<TSessionType> : PolicyHandler
 
 			return enrolments.Any(e => AllowedRoles.Contains(e.ServiceRoleKey));
 		}
-		catch (JsonException)
+		catch (JsonException ex)
 		{
+			_logger.LogError(ex, "Response JSON deserialization error in {PolicyHandler} for user {UserId}",
+				PolicyHandlerName, context.User.UserId());
 			return false;
 		}
 	};
-
-
 
 	private Guid? ResolveSelectedOrganisationId(HttpContext context, TSessionType session)
 	{
