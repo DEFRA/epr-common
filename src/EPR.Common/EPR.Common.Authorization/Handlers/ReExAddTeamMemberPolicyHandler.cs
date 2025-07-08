@@ -2,28 +2,37 @@ namespace EPR.Common.Authorization.Handlers;
 
 using Config;
 using Constants;
-using Models;
+using EPR.Common.Authorization.Extensions;
 using Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Models;
 using Requirements;
 using Sessions;
 using System.Security.Claims;
 using System.Text.Json;
 
-public sealed class ReExAddTeamMemberPolicyHandler<TSessionType>(
-	ISessionManager<TSessionType> sessionManager,
-	IHttpClientFactory httpClientFactory,
-	IOptions<EprAuthorizationConfig> options,
-	ILogger<ReExAddTeamMemberPolicyHandler<TSessionType>> logger,
-	IHttpContextAccessor httpContextAccessor)
-	: PolicyHandlerBase<ReExAddTeamMemberRequirement, TSessionType>(sessionManager, httpClientFactory, options, logger)
+public sealed class ReExAddTeamMemberPolicyHandler<TSessionType> : PolicyHandlerBase<ReExAddTeamMemberRequirement, TSessionType>
 	where TSessionType : class, IHasUserData, new()
 {
-	private readonly ISessionManager<TSessionType> _sessionManager = sessionManager;
-	private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
-	private readonly EprAuthorizationConfig _config = options.Value;
+	private readonly ISessionManager<TSessionType> _sessionManager;
+	private readonly IHttpContextAccessor _httpContextAccessor;
+	private readonly EprAuthorizationConfig _config;
+	private readonly ILogger<ReExAddTeamMemberPolicyHandler<TSessionType>> _logger;
+
+	public ReExAddTeamMemberPolicyHandler(
+		ISessionManager<TSessionType> sessionManager,
+		IHttpClientFactory httpClientFactory,
+		IOptions<EprAuthorizationConfig> options,
+		ILogger<ReExAddTeamMemberPolicyHandler<TSessionType>> logger,
+		IHttpContextAccessor httpContextAccessor) : base(sessionManager, httpClientFactory, options, logger)
+	{
+		_sessionManager = sessionManager;
+		_httpContextAccessor = httpContextAccessor;
+		_config = options.Value;
+		_logger = logger;
+	}
 
 	protected override string PolicyHandlerName => nameof(ReExAddTeamMemberPolicyHandler<TSessionType>);
 	protected override string PolicyDescription => "manage users";
@@ -50,7 +59,7 @@ public sealed class ReExAddTeamMemberPolicyHandler<TSessionType>(
 			return false;
 		}
 
-		var organisationId = GetOrSetSelectedOrganisationId(context, consumerSession);
+		var organisationId = ResolveSelectedOrganisationId(context, consumerSession);
 		if (!organisationId.HasValue || organisationId.Value == Guid.Empty)
 		{
 			context.Response.Redirect(_config.SelectOrganisationRedirect);
@@ -75,28 +84,35 @@ public sealed class ReExAddTeamMemberPolicyHandler<TSessionType>(
 		}
 	};
 
-	private Guid? GetOrSetSelectedOrganisationId(HttpContext context, TSessionType session)
+
+
+	private Guid? ResolveSelectedOrganisationId(HttpContext context, TSessionType session)
 	{
-		if (session.SelectedOrganisationId != null && session.SelectedOrganisationId != Guid.Empty)
+		if (session.SelectedOrganisationId.HasValue && session.SelectedOrganisationId.Value != Guid.Empty)
 			return session.SelectedOrganisationId;
 
-		var routeValues = context.Request.RouteValues;
-		if (routeValues.TryGetValue("organisationId", out var organisationIdObject) &&
+		if (context.Request.RouteValues.TryGetValue("organisationId", out var organisationIdObject) &&
 			Guid.TryParse(organisationIdObject?.ToString(), out var parsedOrganisationId))
 		{
 			session.SelectedOrganisationId = parsedOrganisationId;
+
 			try
 			{
 				// We are in a sync context so forced to block
 				_sessionManager.SaveSessionAsync(context.Session, session).Wait();
 			}
-			catch
+			catch (Exception ex)
 			{
+				_logger.LogError(ex, "Error saving session in {PolicyHandler} for user {UserId}",
+					PolicyHandlerName, context.User.UserId());
 				return null;
 			}
 
 			return parsedOrganisationId;
 		}
+
+		_logger.LogWarning("Failed to resolve organisationId from route values for user {UserId}",
+			context.User.UserId());
 
 		return null;
 	}
