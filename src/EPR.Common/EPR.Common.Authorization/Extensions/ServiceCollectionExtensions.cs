@@ -1,16 +1,21 @@
 ﻿namespace EPR.Common.Authorization.Extensions;
 
-using System.Diagnostics.CodeAnalysis;
-using System.Net.Http.Headers;
+using Azure.Identity;
 using Config;
 using Constants;
+using EPR.Common.Authorization.Services;
+using EPR.Common.Authorization.Services.Interfaces;
 using Handlers;
 using Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using Microsoft.Graph;
 using Requirements;
 using Sessions;
+using System.Diagnostics.CodeAnalysis;
+using System.Net.Http.Headers;
 
 [ExcludeFromCodeCoverage]
 public static class ServiceCollectionExtensions
@@ -23,9 +28,48 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISessionManager<T>, SessionManager<T>>();
     }
 
+    public static IServiceCollection RegisterGraphServiceClient(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.RegisterExtensionConfig(configuration);
+
+        services.AddTransient<IGraphService, GraphService>();
+        services.AddTransient(sp =>
+        {
+            var extensionOptions = sp.GetRequiredService<IOptions<AzureB2CExtensionConfig>>().Value;
+
+            var credential = new ClientSecretCredential(
+                extensionOptions.TenantId,
+                extensionOptions.ClientId,
+                extensionOptions.ClientSecret,
+                new ClientSecretCredentialOptions
+                {
+                    AuthorityHost = AzureAuthorityHosts.AzurePublicCloud,
+                });
+
+            return new GraphServiceClient(
+                credential,
+                ["https://graph.microsoft.com/.default"]);
+        });
+
+        return services;
+    }
+
+    public static IServiceCollection RegisterNullGraphServiceClient(this IServiceCollection services)
+    {
+        //return services.AddTransient<IGraphService>(x => default(GraphService));
+#pragma warning disable CS8603 // Possible null reference return.
+        return services.AddTransient<IGraphService>(x => default);
+#pragma warning restore CS8603 // Possible null reference return.
+    }
+
     private static void RegisterConfig(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<EprAuthorizationConfig>(configuration.GetSection(EprAuthorizationConfig.SectionName));
+    }
+
+    private static void RegisterExtensionConfig(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<AzureB2CExtensionConfig>(configuration.GetSection(AzureB2CExtensionConfig.SectionName));
     }
 
     private static void RegisterAuthorisation<T>(this IServiceCollection services, IConfiguration configuration)
