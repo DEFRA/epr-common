@@ -128,7 +128,9 @@ stages:
             condition: eq(${{parameters.runTests}}, true)
             inputs:
               command: test
-              projects: '**/*[Uu]nit[Tt]ests/*.csproj'
+              projects: | 
+                **/*[Uu]nit[Tt]ests/*.csproj
+                **/*[Tt]est.csproj
               arguments: '--configuration $(buildConfiguration) /p:CollectCoverage=true /p:CoverletOutputFormat=opencover'
               publishTestResults: true
 
