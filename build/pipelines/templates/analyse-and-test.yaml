@@ -47,7 +47,9 @@ stages:
               scannerMode: 'MSBuild'
               projectKey: '${{parameters.sonarQubeProjectKey}}'
               projectName: '${{parameters.sonarQubeProjectName}}'
-              extraProperties: sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+              extraProperties: |
+                sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+                sonar.scm.forceReloadAll=true
 
           - task: NuGetAuthenticate@1
             displayName: 'Authenticate to NuGet'
@@ -102,7 +104,9 @@ stages:
               scannerMode: 'MSBuild'
               projectKey: '${{parameters.sonarQubeProjectKey}}'
               projectName: '${{parameters.sonarQubeProjectName}}'
-              extraProperties: sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+              extraProperties: |
+                sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+                sonar.scm.forceReloadAll=true
 
           - task: NuGetAuthenticate@1
             displayName: 'Authenticate to NuGet'
