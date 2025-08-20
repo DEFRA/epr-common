@@ -29,9 +29,12 @@ parameters:
 - name: runNugetTasks
   type: boolean
   default: false
+- name: projectFolder
+  type: string
+  default: ''
 
 stages:
-  - template: templates/analyse-and-test.yaml@CommonTemplates
+  - template: templates/analyse-and-test.yaml
     parameters:
       solutionFolder: ${{ parameters.solutionFolder }}
       sonarQubeProjectKey: ${{ parameters.sonarQubeProjectKey }}
@@ -40,6 +43,7 @@ stages:
       runNugetTasks: ${{ parameters.runNugetTasks }}
       sonarqubeInstance: ${{ parameters.sonarqubeInstance }}
       dotnetVersion: ${{ parameters.dotnetVersion }}
+      projectFolder: ${{ parameters.projectFolder }}
 
   - stage: BuildAndTest
     displayName: 'Build and Test'

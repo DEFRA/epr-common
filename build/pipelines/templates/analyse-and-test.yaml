@@ -1,0 +1,204 @@
+parameters:
+  - name: solutionFolder
+    type: string
+    default: ''
+  - name: projectFolder
+    type: string
+    default: ''
+  - name: sonarQubeProjectKey
+    type: string
+  - name: sonarQubeProjectName
+    type: string
+  - name: runTests
+    type: boolean
+    default: true
+  - name: runNugetTasks
+    type: boolean
+    default: true
+  - name: sonarqubeInstance
+    type: string
+  - name: dotnetVersion
+    type: string
+
+stages:
+  - stage: SonarQube_Analysis
+    jobs:
+      - job: SDK_Script
+        displayName: 'SDK Script'
+        steps:
+        - script: |
+            dotnet --list-sdks
+            if [ "${{ parameters.dotnetVersion }}" == "dotnetVersion8" ]; then
+              echo '{"sdk":{"version":"8.0.303","rollForward":"latestFeature","allowPrerelease":false}}' > ${{ parameters.solutionFolder }}/global.json
+              cat ${{ parameters.solutionFolder }}/global.json
+            else
+              echo '{"sdk":{"version":"6.0.424","rollForward":"latestFeature","allowPrerelease":false}}' > ${{ parameters.solutionFolder }}/global.json
+              cat ${{ parameters.solutionFolder }}/global.json
+            fi
+
+      - job: SQ_Old_Tasks
+        displayName: 'SQ Old Tasks'
+        dependsOn: SDK_Script
+        steps:
+          - task: SonarQubePrepare@6
+            displayName: 'SonarQube Old Prepare'
+            inputs:
+              SonarQube: 'SonarQube'
+              scannerMode: 'MSBuild'
+              projectKey: '${{parameters.sonarQubeProjectKey}}'
+              projectName: '${{parameters.sonarQubeProjectName}}'
+              extraProperties: sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+
+          - task: NuGetAuthenticate@1
+            displayName: 'Authenticate to NuGet'
+            condition: eq(${{parameters.runNugetTasks}}, true)
+
+          - task: DotNetCoreCLI@2
+            displayName: 'NuGet Restore'
+            condition: eq(${{parameters.runNugetTasks}}, true)
+            inputs:
+              command: 'restore'
+              projects: '**/*.sln'
+              feedsToUse: 'config'
+              nugetConfigPath: '${{parameters.solutionFolder}}/NuGet.Config'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Run Build'
+            inputs:
+              command: build
+              projects: '${{ parameters.projectFolder }}/*.csproj'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Run Unit Tests'
+            condition: eq(${{parameters.runTests}}, true)
+            inputs:
+              command: test
+              projects: '**/*[Uu]nit[Tt]ests/*.csproj'
+              arguments: '--configuration $(buildConfiguration) /p:CollectCoverage=true /p:CoverletOutputFormat=opencover'
+              publishTestResults: true
+
+          - task: SonarQubeAnalyze@6
+            displayName: 'SonarQube Old Analyse'
+            inputs:
+              jdkversion: 'JAVA_HOME_17_X64'
+
+          - task: SonarQubePublish@6
+            displayName: 'SonarQube Old Publish'
+            retryCountOnTaskFailure: 5
+            inputs:
+              SonarQube: 'SonarQube'
+              pollingTimeoutSec: '300'
+              
+      - job: SQ_Upgraded_Tasks
+        displayName: 'SQ Upgraded Tasks'
+        dependsOn: SDK_Script
+        steps:   
+          - task: SonarQubePrepare@6
+            displayName: 'SonarQube Upgraded Prepare'
+            inputs:
+              SonarQube: 'SonarQubeLatest'
+              scannerMode: 'MSBuild'
+              projectKey: '${{parameters.sonarQubeProjectKey}}'
+              projectName: '${{parameters.sonarQubeProjectName}}'
+              extraProperties: sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+
+          - task: NuGetAuthenticate@1
+            displayName: 'Authenticate to NuGet'
+            condition: eq(${{parameters.runNugetTasks}}, true)
+
+          - task: DotNetCoreCLI@2
+            displayName: 'NuGet Restore'
+            condition: eq(${{parameters.runNugetTasks}}, true)
+            inputs:
+              command: 'restore'
+              projects: '**/*.sln'
+              feedsToUse: 'config'
+              nugetConfigPath: '${{parameters.solutionFolder}}/NuGet.Config'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Run Build'
+            inputs:
+              command: build
+              projects: '${{ parameters.projectFolder }}/*.csproj'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Run Unit Tests'
+            condition: eq(${{parameters.runTests}}, true)
+            inputs:
+              command: test
+              projects: '**/*[Uu]nit[Tt]ests/*.csproj'
+              arguments: '--configuration $(buildConfiguration) /p:CollectCoverage=true /p:CoverletOutputFormat=opencover'
+              publishTestResults: true
+
+          - task: SonarQubeAnalyze@6
+            displayName: 'SonarQube Upgraded Analyse'
+            inputs:
+              jdkversion: 'JAVA_HOME_17_X64'
+
+          - task: SonarQubePublish@6
+            displayName: 'SonarQube Upgraded Publish'
+            retryCountOnTaskFailure: 5
+            inputs:
+              SonarQube: 'SonarQubeLatest'
+              pollingTimeoutSec: '300'
+
+          - task: AzureKeyVault@2
+            displayName: 'Obtain SonarQube Token from Keyvault'
+            inputs:
+              azureSubscription: 'AZD-RWD-DEV1'
+              KeyVaultName: 'DEVRWDINFKV1401'
+              SecretsFilter: 'EPRADO-SonarQubeToken'
+
+          - powershell: |
+                if ("$(Build.Reason)" -eq "PullRequest")
+                {
+                  Write-Host "RepoProvider:" $(Build.Repository.Provider)
+                  Switch ("$(Build.Repository.Provider)") {
+                    "TfsGit" { $pullRequestId = "$(System.PullRequest.PullRequestId)" }
+                    "GitHub" { $pullRequestId = "$(System.PullRequest.PullRequestNumber)" }
+                    Default { Write-Host "Build.Repository.Provider '$(Build.Repository.Provider)' was unexpected"; exit 1 }
+                  }
+                  Write-Host "Checking SonarQube results for" ${{parameters.sonarQubeProjectKey}} "from pull request" $pullRequestId
+                  $qualifier = '&pullRequest='+$pullRequestId
+                }
+                else
+                {
+                  $branchName = "$(Build.SourceBranch)".Replace('refs/heads/', '')
+                  Write-Host "Checking SonarQube results for" ${{parameters.sonarQubeProjectKey}} "from branch" $branchName
+                  $escapedBranchName = [system.uri]::EscapeDataString("$branchName")
+                  $qualifier = '&branch='+$escapedBranchName
+                }
+                Switch ("${{parameters.sonarqubeInstance}}") {
+                  "SonarQube" { $instanceUrlPart = "vss-sonarqube.azure.defra.cloud" }
+                  "SonarQubeLatest" {
+                    $sonarQubeApiToken = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes("$(EPRADO-SonarQubeToken):"))
+                    $headers = @{
+                      "Authorization" = "Basic $sonarQubeApiToken"
+                      "Accept" = "application/json"
+                    };
+                    $instanceUrlPart = "vss-sonarqube-upgrade.azure.defra.cloud" 
+                  }
+                  Default { Write-Host "parameters.sonarqubeInstance '${{parameters.sonarqubeInstance}}' was unexpected"; exit 1 }
+                }
+                $uri = "https://$instanceUrlPart/api/qualitygates/project_status?projectKey=${{parameters.sonarQubeProjectName}}" + $qualifier
+                Write-Host "SonarQube URI = " $uri
+                try {
+                  $qualityGateStatus = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get;
+                }
+                catch {
+                  Write-Host "ERROR GETTING SONARQUBE STATUS: " $_
+                  exit 0
+                }
+                if ($qualityGateStatus.projectStatus.status -eq "OK") {
+                  Write-Host "Quality Gate Succeeded";
+                  exit 0; # all is good, quit here
+                } else {
+                  Write-Host "##vso[task.logissue type=warning;]Quality Gate failed."
+                  $gateErrors = $qualityGateStatus.projectStatus.conditions | Where-Object {$_.status -eq "ERROR" };
+                  $gateErrors | ConvertTo-Json;
+                  $webUrl = "https://$instanceUrlPart/dashboard?id=${{parameters.sonarQubeProjectName}}" + $qualifier;
+                  Write-Host "SonarQube link (needs OpenVPN)" $webUrl
+                  Write-Host "##[error]Quality Gate failed. Stopping the build."
+                  exit 1 # HARD FAIL
+                }
+            displayName: Check SonarQube Quality Gate
