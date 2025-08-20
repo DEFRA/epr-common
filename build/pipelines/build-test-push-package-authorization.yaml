@@ -50,4 +50,5 @@ stages:
       sonarQubeProjectKey: epr-prn-common-authorization
       sonarQubeProjectName: epr-prn-common-authorization
       runNugetTasks: false
+      projectFolder: src/EPR.Common/EPR.Common.Authorization
       # versioningScheme: $(versioningScheme)
