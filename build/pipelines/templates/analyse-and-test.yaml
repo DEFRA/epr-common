@@ -26,6 +26,8 @@ stages:
       - job: SDK_Script
         displayName: 'SDK Script'
         steps:
+        - checkout: self
+          fetchDepth: 0
         - script: |
             dotnet --list-sdks
             if [ "${{ parameters.dotnetVersion }}" == "dotnetVersion8" ]; then
@@ -49,6 +51,7 @@ stages:
               projectName: '${{parameters.sonarQubeProjectName}}'
               extraProperties: |
                 sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+                sonar.scm.forceReloadAll=true
 
           - task: NuGetAuthenticate@1
             displayName: 'Authenticate to NuGet'
@@ -105,6 +108,7 @@ stages:
               projectName: '${{parameters.sonarQubeProjectName}}'
               extraProperties: |
                 sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+                sonar.scm.forceReloadAll=true
 
           - task: NuGetAuthenticate@1
             displayName: 'Authenticate to NuGet'
