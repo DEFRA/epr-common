@@ -28,7 +28,7 @@ parameters:
   default: 'dotnetVersion6'
 - name: runNugetTasks
   type: boolean
-  default: true
+  default: false
 
 stages:
   - template: templates/analyse-and-test.yaml@CommonTemplates
