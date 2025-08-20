@@ -20,9 +20,6 @@ parameters:
   type: string
 - name: sonarQubeProjectName
   type: string
-- name: runTests
-  type: boolean
-  default: true
 - name: sonarqubeInstance
   type: string
   default: SonarQube
