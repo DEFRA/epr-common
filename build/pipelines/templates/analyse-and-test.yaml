@@ -49,7 +49,6 @@ stages:
               projectName: '${{parameters.sonarQubeProjectName}}'
               extraProperties: |
                 sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
-                sonar.scm.forceReloadAll=true
 
           - task: NuGetAuthenticate@1
             displayName: 'Authenticate to NuGet'
@@ -60,7 +59,7 @@ stages:
             condition: eq(${{parameters.runNugetTasks}}, true)
             inputs:
               command: 'restore'
-              projects: '**/*.sln'
+              projects: '${{ parameters.projectFolder }}/*.csproj'
               feedsToUse: 'config'
               nugetConfigPath: '${{parameters.solutionFolder}}/NuGet.Config'
 
@@ -106,7 +105,6 @@ stages:
               projectName: '${{parameters.sonarQubeProjectName}}'
               extraProperties: |
                 sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
-                sonar.scm.forceReloadAll=true
 
           - task: NuGetAuthenticate@1
             displayName: 'Authenticate to NuGet'
@@ -117,7 +115,7 @@ stages:
             condition: eq(${{parameters.runNugetTasks}}, true)
             inputs:
               command: 'restore'
-              projects: '**/*.sln'
+              projects: '${{ parameters.projectFolder }}/*.csproj'
               feedsToUse: 'config'
               nugetConfigPath: '${{parameters.solutionFolder}}/NuGet.Config'
 

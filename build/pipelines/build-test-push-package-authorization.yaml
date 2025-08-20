@@ -49,6 +49,6 @@ stages:
       dotnetVersion: dotnetVersion8
       sonarQubeProjectKey: epr-prn-common-authorization
       sonarQubeProjectName: epr-prn-common-authorization
-      runNugetTasks: false
+      runNugetTasks: true
       projectFolder: src/EPR.Common/EPR.Common.Authorization
       # versioningScheme: $(versioningScheme)
