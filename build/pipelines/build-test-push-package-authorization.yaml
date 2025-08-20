@@ -36,13 +36,7 @@ resources:
       type: git
       ref: main
 
-
-steps:
-  - script: |
-      dotnet --list-sdks
-        echo '{"sdk":{"version":"8.0.303","rollForward":"latestFeature","allowPrerelease":false}}' > ${{ parameters.solutionFolder }}/global.json
-        cat ${{ parameters.solutionFolder }}/global.json
-
+stages:
   - template: templates/template-build-test.yaml
     parameters:
       versionVariableGroupName: EPR.Common.Authorize

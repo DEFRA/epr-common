@@ -34,7 +34,7 @@ parameters:
   default: true
 
 stages:
-  - template: templates/analyse-and-test.yaml
+  - template: templates/analyse-and-test.yaml@CommonTemplates
     parameters:
       solutionFolder: ${{ parameters.solutionFolder }}
       sonarQubeProjectKey: ${{ parameters.sonarQubeProjectKey }}
@@ -50,6 +50,10 @@ stages:
       - job: BuildAndTest
         displayName: 'Build and Test'
         steps:
+        - script: |
+            dotnet --list-sdks
+              echo '{"sdk":{"version":"8.0.303","rollForward":"latestFeature","allowPrerelease":false}}' > ${{ parameters.solutionFolder }}/global.json
+              cat ${{ parameters.solutionFolder }}/global.json
         - pwsh: | 
             Set-StrictMode -Version 3.0
 
