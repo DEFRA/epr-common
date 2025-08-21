@@ -15,6 +15,13 @@ parameters:
     default: 'src/EPR.Common/'
     values:
     - 'src/EPR.Common/'
+  - name: sonarqubeInstance
+    displayName: 'Select SonarQube for v9.9 or SonarQubeLatest for 10.4'
+    type: string
+    default: 'SonarQubeLatest'
+    values:
+    - 'SonarQube'
+    - 'SonarQubeLatest'
 
 pool: DEFRA-COMMON-ubuntu2004-SSV3
 
