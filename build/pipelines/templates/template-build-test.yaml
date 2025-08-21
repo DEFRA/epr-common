@@ -34,7 +34,7 @@ parameters:
   default: ''
 
 stages:
-  - template: analyse-and-test.yaml@CommonTemplates
+  - template: templates/analyse-and-test.yaml@CommonTemplates
     parameters:
       solutionFolder: ${{ parameters.solutionFolder }}
       sonarQubeProjectKey: ${{ parameters.sonarQubeProjectKey }}
