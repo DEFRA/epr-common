@@ -32,6 +32,9 @@ parameters:
 - name: projectFolder
   type: string
   default: ''
+- name: testFolder
+  type: string
+  default: ''
 
 stages:
   - template: templates/analyse-and-test.yaml@CommonTemplates
@@ -44,6 +47,7 @@ stages:
       sonarqubeInstance: ${{ parameters.sonarqubeInstance }}
       dotnetVersion: ${{ parameters.dotnetVersion }}
       projectFolder: ${{ parameters.projectFolder }}
+      testFolder: ${{ parameters.testFolder }}
 
   - stage: BuildAndTest
     displayName: 'Build and Test'
