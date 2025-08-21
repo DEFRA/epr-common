@@ -49,11 +49,11 @@ stages:
       projectFolder: ${{ parameters.projectFolder }}
       testFolder: ${{ parameters.testFolder }}
 
-  - stage: BuildAndTest
-    displayName: 'Build and Test'
+  - stage: BuildTestPublish
+    displayName: 'Build, Test & Publish'
     jobs:
-      - job: BuildAndTest
-        displayName: 'Build and Test'
+      - job: BuildTestPublish
+        displayName: 'Build, Test & Publish'
         steps:
         - script: |
             dotnet --list-sdks
