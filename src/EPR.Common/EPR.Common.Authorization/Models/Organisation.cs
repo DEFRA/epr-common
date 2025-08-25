@@ -39,4 +39,10 @@ public class Organisation
     public string? Postcode { get; set; }
 
     public string? JobTitle { get; set; }
+
+    public string? PersonRoleInOrganisation { get; set; }
+
+    public bool IsChangeRequestPending { get; set; } = false;
+
+	public List<Enrolment>? Enrolments { get; set; }
 }

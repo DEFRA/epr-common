@@ -16,7 +16,7 @@ public class UserData
 
     public string ServiceRole { get; set; }
 
-    public string Service { get; set; }
+	public string Service { get; set; }
     
     public int ServiceRoleId { get; set; }
 
@@ -28,5 +28,7 @@ public class UserData
 
     public bool IsChangeRequestPending { get; set; }
 
-    public List<Organisation> Organisations { get; set; } = new();
+	public int NumberOfOrganisations { get; set; }
+
+	public List<Organisation> Organisations { get; set; } = new();
 }

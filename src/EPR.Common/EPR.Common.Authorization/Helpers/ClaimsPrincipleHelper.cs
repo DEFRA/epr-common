@@ -117,5 +117,5 @@ public static class ClaimsPrincipleHelper
                (userData.EnrolmentStatus == EnrolmentStatuses.Approved
                 || userData.EnrolmentStatus == EnrolmentStatuses.Enrolled
                 || userData.EnrolmentStatus == EnrolmentStatuses.Pending);
-    }
+	}
 }

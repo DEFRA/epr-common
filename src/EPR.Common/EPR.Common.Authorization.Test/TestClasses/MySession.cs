@@ -9,7 +9,7 @@ public class MySession : IHasUserData
     {
     }
 
-    public UserData UserData { get; set; }
+    public UserData UserData { get; set; } = new();
     
-    public string? OtherProperty { get; set; }
+    public Guid? SelectedOrganisationId { get; set; }
 }
