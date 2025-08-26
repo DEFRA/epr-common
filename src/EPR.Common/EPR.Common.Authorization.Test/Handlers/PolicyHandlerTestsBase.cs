@@ -73,6 +73,11 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
 
         _httpContextMock.SetupGet(x => x.RequestServices).Returns(serviceProviderMock.Object);
 
+        _httpContextMock.Setup(x => x.Features).Returns(new FeatureCollection());
+        var requestMock = new Mock<HttpRequest>();
+        requestMock.SetupGet(r => r.Path).Returns(new PathString("/"));
+        _httpContextMock.SetupGet(x => x.Request).Returns(requestMock.Object);
+
         _policyHandler = Activator.CreateInstance(
             typeof(TPolicyHandler),
             _sessionManagerMock.Object,
@@ -457,5 +462,185 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
         featureCollection.Set(authenticateResultFeatureMock.Object);
 
         return featureCollection;
+    }
+
+    private FeatureCollection BuildFeatureCollectionWithEndpoint(ClaimsPrincipal user, Endpoint endpoint)
+    {
+        var features = BuildFeatureCollection(user); // existing helper adds IAuthenticateResultFeature
+        var endpointFeatureMock = new Mock<IEndpointFeature>();
+        endpointFeatureMock.SetupGet(f => f.Endpoint).Returns(endpoint);
+        features.Set<IEndpointFeature>(endpointFeatureMock.Object);
+        return features;
+    }
+
+    private void SetupRequestPath(string path)
+    {
+        var requestMock = new Mock<HttpRequest>();
+        requestMock.SetupGet(r => r.Path).Returns(new PathString(path));
+        _httpContextMock.SetupGet(x => x.Request).Returns(requestMock.Object);
+    }
+
+    protected async Task HandleRequirementAsync_Skips_WhenEndpointAllowsAnonymous_AndUserUnauthenticated()
+    {
+        var user = new ClaimsPrincipal(new ClaimsIdentity()); // unauthenticated
+        var endpoint = new Endpoint(_ => Task.CompletedTask,
+            new EndpointMetadataCollection(new AllowAnonymousAttribute()), "AnonEndpoint");
+
+        var features = BuildFeatureCollectionWithEndpoint(user, endpoint);
+        _httpContextMock.Setup(x => x.Features).Returns(features);
+        _httpContextMock.SetupGet(x => x.User).Returns(user);
+
+        var handlerContext = new AuthorizationHandlerContext(
+            new List<IAuthorizationRequirement> { new TPolicyRequirement() },
+            user,
+            _httpContextMock.Object);
+
+        await _policyHandler.HandleAsync(handlerContext);
+
+        Assert.IsFalse(handlerContext.HasSucceeded);
+        _sessionManagerMock.Verify(x => x.GetSessionAsync(It.IsAny<ISession>()), Times.Never);
+        _sessionManagerMock.Verify(x => x.SaveSessionAsync(It.IsAny<ISession>(), It.IsAny<MySession>()), Times.Never);
+        _httpMessageHandlerMock.Protected().Verify("SendAsync", Times.Never(),
+            ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
+    }
+
+    protected async Task HandleRequirementAsync_Skips_WhenEndpointAllowsAnonymous_AndUserAuthenticated_WouldOtherwiseSucceed(
+    string serviceRole, string roleInOrganisation, string enrolmentStatus)
+    {
+        var userData = new UserData { ServiceRole = serviceRole, RoleInOrganisation = roleInOrganisation, EnrolmentStatus = enrolmentStatus };
+        var claims = new[]
+        {
+        new Claim(ClaimConstants.ObjectId, "12345678-1234-1234-1234-123456789012"),
+        new Claim(ClaimTypes.UserData, JsonSerializer.Serialize(userData))
+    };
+        var user = new ClaimsPrincipal(new ClaimsIdentity(claims, "CustomAuthenticationType")); // authenticated
+
+        var endpoint = new Endpoint(_ => Task.CompletedTask,
+            new EndpointMetadataCollection(new AllowAnonymousAttribute()), "AnonEndpoint");
+
+        var features = BuildFeatureCollectionWithEndpoint(user, endpoint);
+        _httpContextMock.Setup(x => x.Features).Returns(features);
+        _httpContextMock.SetupGet(x => x.User).Returns(user);
+
+        var handlerContext = new AuthorizationHandlerContext(
+            new List<IAuthorizationRequirement> { new TPolicyRequirement() },
+            user,
+            _httpContextMock.Object);
+
+        await _policyHandler.HandleAsync(handlerContext);
+
+        // Should skip entirely (no success mark, no cache/DB)
+        Assert.IsFalse(handlerContext.HasSucceeded);
+        _sessionManagerMock.Verify(x => x.GetSessionAsync(It.IsAny<ISession>()), Times.Never);
+        _sessionManagerMock.Verify(x => x.SaveSessionAsync(It.IsAny<ISession>(), It.IsAny<MySession>()), Times.Never);
+        _httpMessageHandlerMock.Protected().Verify("SendAsync", Times.Never(),
+            ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
+    }
+
+    protected async Task HandleRequirementAsync_Skips_WhenPathIsHealth_AndUserUnauthenticated()
+    {
+        var user = new ClaimsPrincipal(new ClaimsIdentity()); // unauthenticated
+
+        // No endpoint metadata; rely on path preflight
+        var features = BuildFeatureCollection(user);
+        _httpContextMock.Setup(x => x.Features).Returns(features);
+        _httpContextMock.SetupGet(x => x.User).Returns(user);
+        SetupRequestPath("/admin/health");
+
+        var handlerContext = new AuthorizationHandlerContext(
+            new List<IAuthorizationRequirement> { new TPolicyRequirement() },
+            user,
+            _httpContextMock.Object);
+
+        await _policyHandler.HandleAsync(handlerContext);
+
+        Assert.IsFalse(handlerContext.HasSucceeded);
+        _sessionManagerMock.Verify(x => x.GetSessionAsync(It.IsAny<ISession>()), Times.Never);
+        _sessionManagerMock.Verify(x => x.SaveSessionAsync(It.IsAny<ISession>(), It.IsAny<MySession>()), Times.Never);
+        _httpMessageHandlerMock.Protected().Verify("SendAsync", Times.Never(),
+            ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
+    }
+
+    protected async Task HandleRequirementAsync_Skips_WhenPathIsHealth_AndUserAuthenticated_WouldOtherwiseSucceed(
+    string serviceRole, string roleInOrganisation, string enrolmentStatus)
+    {
+        var userData = new UserData { ServiceRole = serviceRole, RoleInOrganisation = roleInOrganisation, EnrolmentStatus = enrolmentStatus };
+        var claims = new[]
+        {
+        new Claim(ClaimConstants.ObjectId, "12345678-1234-1234-1234-123456789012"),
+        new Claim(ClaimTypes.UserData, JsonSerializer.Serialize(userData))
+    };
+        var user = new ClaimsPrincipal(new ClaimsIdentity(claims, "CustomAuthenticationType")); // authenticated
+
+        var features = BuildFeatureCollection(user);
+        _httpContextMock.Setup(x => x.Features).Returns(features);
+        _httpContextMock.SetupGet(x => x.User).Returns(user);
+        SetupRequestPath("/admin/health");
+
+        var handlerContext = new AuthorizationHandlerContext(
+            new List<IAuthorizationRequirement> { new TPolicyRequirement() },
+            user,
+            _httpContextMock.Object);
+
+        await _policyHandler.HandleAsync(handlerContext);
+
+        Assert.IsFalse(handlerContext.HasSucceeded);
+        _sessionManagerMock.Verify(x => x.GetSessionAsync(It.IsAny<ISession>()), Times.Never);
+        _sessionManagerMock.Verify(x => x.SaveSessionAsync(It.IsAny<ISession>(), It.IsAny<MySession>()), Times.Never);
+        _httpMessageHandlerMock.Protected().Verify("SendAsync", Times.Never(),
+            ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
+    }
+
+    protected async Task HandleRequirementAsync_Skips_WhenPathIsError_AndUserUnauthenticated()
+    {
+        var user = new ClaimsPrincipal(new ClaimsIdentity()); // unauthenticated
+
+        var features = BuildFeatureCollection(user);
+        _httpContextMock.Setup(x => x.Features).Returns(features);
+        _httpContextMock.SetupGet(x => x.User).Returns(user);
+        SetupRequestPath("/error");
+
+        var handlerContext = new AuthorizationHandlerContext(
+            new List<IAuthorizationRequirement> { new TPolicyRequirement() },
+            user,
+            _httpContextMock.Object);
+
+        await _policyHandler.HandleAsync(handlerContext);
+
+        Assert.IsFalse(handlerContext.HasSucceeded);
+        _sessionManagerMock.Verify(x => x.GetSessionAsync(It.IsAny<ISession>()), Times.Never);
+        _sessionManagerMock.Verify(x => x.SaveSessionAsync(It.IsAny<ISession>(), It.IsAny<MySession>()), Times.Never);
+        _httpMessageHandlerMock.Protected().Verify("SendAsync", Times.Never(),
+            ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
+    }
+
+    protected async Task HandleRequirementAsync_Skips_WhenPathIsError_AndUserAuthenticated_WouldOtherwiseSucceed(
+    string serviceRole, string roleInOrganisation, string enrolmentStatus)
+    {
+        var userData = new UserData { ServiceRole = serviceRole, RoleInOrganisation = roleInOrganisation, EnrolmentStatus = enrolmentStatus };
+        var claims = new[]
+        {
+        new Claim(ClaimConstants.ObjectId, "12345678-1234-1234-1234-123456789012"),
+        new Claim(ClaimTypes.UserData, JsonSerializer.Serialize(userData))
+    };
+        var user = new ClaimsPrincipal(new ClaimsIdentity(claims, "CustomAuthenticationType")); // authenticated
+
+        var features = BuildFeatureCollection(user);
+        _httpContextMock.Setup(x => x.Features).Returns(features);
+        _httpContextMock.SetupGet(x => x.User).Returns(user);
+        SetupRequestPath("/error");
+
+        var handlerContext = new AuthorizationHandlerContext(
+            new List<IAuthorizationRequirement> { new TPolicyRequirement() },
+            user,
+            _httpContextMock.Object);
+
+        await _policyHandler.HandleAsync(handlerContext);
+
+        Assert.IsFalse(handlerContext.HasSucceeded);
+        _sessionManagerMock.Verify(x => x.GetSessionAsync(It.IsAny<ISession>()), Times.Never);
+        _sessionManagerMock.Verify(x => x.SaveSessionAsync(It.IsAny<ISession>(), It.IsAny<MySession>()), Times.Never);
+        _httpMessageHandlerMock.Protected().Verify("SendAsync", Times.Never(),
+            ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
     }
 }
