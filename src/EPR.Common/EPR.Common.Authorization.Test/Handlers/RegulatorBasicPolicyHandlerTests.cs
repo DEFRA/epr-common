@@ -133,8 +133,6 @@ public class RegulatorBasicPolicyHandlerTests : PolicyHandlerTestsBase<Regulator
     await HandleRequirementAsync_Skips_WhenEndpointAllowsAnonymous_AndUserAuthenticated_WouldOtherwiseSucceed(
         serviceRole, roleInOrganisation, enrolmentStatus);
 
-    [TestMethod]
-    public async Task RegulatorBasic_Skips_When_Path_Is_Health_And_User_Unauthenticated() =>
-        await HandleRequirementAsync_Skips_WhenPathIsHealth_AndUserUnauthenticated();
+    
     
 }

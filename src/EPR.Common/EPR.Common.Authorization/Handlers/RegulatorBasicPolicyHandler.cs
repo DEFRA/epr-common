@@ -8,7 +8,7 @@ using EPR.Common.Authorization.Sessions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Extensions.Configuration;
+
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -18,6 +18,8 @@ public sealed class RegulatorBasicPolicyHandler<TSessionType>
     : PolicyHandlerBase<RegulatorBasicPolicyRequirement, TSessionType>
     where TSessionType : class, IHasUserData, new()
 {
+    private readonly ILogger<RegulatorBasicPolicyHandler<TSessionType>> _logger;
+
     public RegulatorBasicPolicyHandler(
         ISessionManager<TSessionType> sessionManager,
         IHttpClientFactory httpClientFactory,
@@ -25,11 +27,13 @@ public sealed class RegulatorBasicPolicyHandler<TSessionType>
         ILogger<RegulatorBasicPolicyHandler<TSessionType>> logger)
         : base(sessionManager, httpClientFactory, options, logger)
     {
+        _logger = logger;
     }
 
     protected override string PolicyHandlerName => nameof(RegulatorBasicPolicyHandler<TSessionType>);
     protected override string PolicyDescription => ServiceRoles.RegulatorBasic;
-    protected override Func<ClaimsPrincipal, bool> IsUserAllowed =>
+
+      protected override Func<ClaimsPrincipal, bool> IsUserAllowed =>
         ClaimsPrincipleHelper.IsRegulator;
 
     protected override async Task HandleRequirementAsync(
@@ -40,18 +44,22 @@ public sealed class RegulatorBasicPolicyHandler<TSessionType>
             context.Resource as HttpContext ??
             (context.Resource as AuthorizationFilterContext)?.HttpContext;
 
-        if (httpContext is not null)
-        {
-            var endpoint = httpContext.GetEndpoint();
+        // 1) If endpoint allows anonymous, do nothing (don’t hit base).
+        if (httpContext?.GetEndpoint()?.Metadata.GetMetadata<IAllowAnonymous>() is not null)
+            return;
 
-            // If the endpoint explicitly allows anonymous, bail out early
-            if (endpoint?.Metadata.GetMetadata<IAllowAnonymous>() != null)
-            {
-                return;
-            }
+
+        // 2) If the user is unauthenticated and the endpoint requires auth,
+        //    let the framework challenge — do NOT call base (avoids the warning in base).
+        if (context.User?.Identity?.IsAuthenticated != true)
+        {
+            _logger.LogDebug("{Policy} unauthenticated request to {Path}",
+                PolicyHandlerName, httpContext?.Request.Path.Value ?? string.Empty);
+            return;
+
         }
 
-        // For everything else, use the base behavior (includes auth checks, cache, DB, and logging)
+        // 3) Authenticated: proceed with base
         await base.HandleRequirementAsync(context, requirement);
     }
 }
