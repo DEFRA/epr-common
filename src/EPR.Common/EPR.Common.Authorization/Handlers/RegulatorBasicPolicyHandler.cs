@@ -49,21 +49,6 @@ public sealed class RegulatorBasicPolicyHandler<TSessionType>
             {
                 return;
             }
-
-            // Skip well-known anonymous/system paths that might be hit by probes
-            var healthPath = "/admin/health";
-
-            if (!string.IsNullOrWhiteSpace(healthPath) &&
-                httpContext.Request.Path.StartsWithSegments(healthPath, StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
-
-            // This guards in case metadata isn't present during re-exec
-            if (httpContext.Request.Path.StartsWithSegments("/error", StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
         }
 
         // For everything else, use the base behavior (includes auth checks, cache, DB, and logging)
