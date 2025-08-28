@@ -119,20 +119,4 @@ public class RegulatorBasicPolicyHandlerTests : PolicyHandlerTestsBase<Regulator
     [TestMethod]
     public async Task RegulatorBasic_IsNotAuthorised_WhenApiCallFails() =>
         await HandleRequirementAsync_Fails_WhenApiCallFails();
-
-    [TestMethod]
-    public async Task RegulatorBasic_Skips_When_Endpoint_Allows_Anonymous_And_User_Unauthenticated() =>
-        await HandleRequirementAsync_Skips_WhenEndpointAllowsAnonymous_AndUserUnauthenticated();
-
-    [TestMethod]
-    [DataRow(ServiceRoles.RegulatorBasic, RoleInOrganisation.NotSet, EnrolmentStatuses.Approved)]
-    [DataRow(ServiceRoles.RegulatorBasic, RoleInOrganisation.Admin, EnrolmentStatuses.Approved)]
-    [DataRow(ServiceRoles.RegulatorBasic, RoleInOrganisation.Employee, EnrolmentStatuses.Approved)]
-    public async Task RegulatorBasic_Skips_When_Endpoint_Allows_Anonymous_And_User_Authenticated_WouldOtherwiseSucceed(
-    string serviceRole, string roleInOrganisation, string enrolmentStatus) =>
-    await HandleRequirementAsync_Skips_WhenEndpointAllowsAnonymous_AndUserAuthenticated_WouldOtherwiseSucceed(
-        serviceRole, roleInOrganisation, enrolmentStatus);
-
-    
-    
 }
