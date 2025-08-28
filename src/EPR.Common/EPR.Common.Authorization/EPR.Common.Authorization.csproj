@@ -23,7 +23,7 @@
     <ItemGroup>
       <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="8.0.7" />
       <PackageReference Include="Microsoft.Graph" Version="5.91.0" />
-      <PackageReference Include="Microsoft.Identity.Web" Version="3.0.1" />
+      <PackageReference Include="Microsoft.Identity.Web" Version="3.1.0" />
     </ItemGroup>
 
 </Project>
