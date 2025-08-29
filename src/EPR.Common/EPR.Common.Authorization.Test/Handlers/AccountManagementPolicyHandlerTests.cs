@@ -125,4 +125,16 @@ public class AccountManagementPolicyHandlerTests
     [TestMethod]
     public async Task AccountManagement_IsNotAuthorised_WhenApiCallFails() =>
         await HandleRequirementAsync_Fails_WhenApiCallFails();
+
+    [TestMethod]
+    public async Task AccountManagement_Skips_When_Endpoint_Allows_Anonymous_And_User_Unauthenticated() =>
+    await HandleRequirementAsync_Skips_WhenEndpointAllowsAnonymous_AndUserUnauthenticated();
+
+    [TestMethod]
+    [DataRow(ServiceRoles.ApprovedPerson, RoleInOrganisation.Admin, EnrolmentStatuses.Enrolled)]
+    [DataRow(ServiceRoles.BasicUser, RoleInOrganisation.Employee, EnrolmentStatuses.Enrolled)]
+    public async Task AccountManagement_Skips_When_Endpoint_Allows_Anonymous_And_User_Authenticated_WouldOtherwiseSucceed(
+        string serviceRole, string roleInOrganisation, string enrolmentStatus) =>
+        await HandleRequirementAsync_Skips_WhenEndpointAllowsAnonymous_AndUserAuthenticated_WouldOtherwiseSucceed(
+            serviceRole, roleInOrganisation, enrolmentStatus);
 }
