@@ -8,4 +8,5 @@ public static class ServiceRoles
     public const string BasicUser = "Basic User";
     public const string RegulatorBasic = "Regulator Basic";
     public const string RegulatorAdmin = "Regulator Admin";
+    public const string AccountManagement = "Manage Users";
 }
