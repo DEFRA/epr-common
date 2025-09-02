@@ -50,7 +50,6 @@ stages:
               runTests: ${{ parameters.runTests }}
               runNugetTasks: ${{ parameters.runNugetTasks }}
               sonarqubeInstance: ${{ parameters.sonarqubeInstance }}
-              dotnetVersion: ${{ parameters.dotnetVersion }}
               projectFolder: ${{ parameters.projectFolder }}
               testFolder: ${{ parameters.testFolder }}
 
