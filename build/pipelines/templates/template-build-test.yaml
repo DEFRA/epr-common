@@ -37,7 +37,7 @@ parameters:
   default: ''
 
 stages:
- - stage: AnalyseAndTest
+  - stage: AnalyseAndTest
     displayName: 'Analyse and Test'
     jobs:
       - job: AnalyseAndTestJob
