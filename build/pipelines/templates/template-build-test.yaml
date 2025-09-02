@@ -37,10 +37,10 @@ parameters:
   default: ''
 
 stages:
-  - stage: AnalyseAndTest
-    displayName: 'Analyse and Test'
+  - stage: SonarQube_Analysis
     jobs:
-      - job: AnalyseAndTestJob
+      - job: RunSonarQubeAnalysis
+        displayName: 'Run SonarQube Analysis'
         steps:
           - template: templates/analyse-and-test.yaml@CommonTemplates
             parameters:
