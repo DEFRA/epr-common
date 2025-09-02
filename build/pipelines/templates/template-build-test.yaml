@@ -37,17 +37,21 @@ parameters:
   default: ''
 
 stages:
-  - template: templates/analyse-and-test.yaml@CommonTemplates
-    parameters:
-      solutionFolder: ${{ parameters.solutionFolder }}
-      sonarQubeProjectKey: ${{ parameters.sonarQubeProjectKey }}
-      sonarQubeProjectName: ${{ parameters.sonarQubeProjectName }}
-      runTests: ${{ parameters.runTests }}
-      runNugetTasks: ${{ parameters.runNugetTasks }}
-      sonarqubeInstance: ${{ parameters.sonarqubeInstance }}
-      dotnetVersion: ${{ parameters.dotnetVersion }}
-      projectFolder: ${{ parameters.projectFolder }}
-      testFolder: ${{ parameters.testFolder }}
+  - stage: SonarQube_Analysis
+    jobs:
+      - job: RunSonarQubeAnalysis
+        displayName: 'Run SonarQube Analysis'
+        steps:
+          - template: templates/analyse-and-test.yaml@CommonTemplates
+            parameters:
+              solutionFolder: ${{ parameters.solutionFolder }}
+              sonarQubeProjectKey: ${{ parameters.sonarQubeProjectKey }}
+              sonarQubeProjectName: ${{ parameters.sonarQubeProjectName }}
+              runTests: ${{ parameters.runTests }}
+              runNugetTasks: ${{ parameters.runNugetTasks }}
+              sonarqubeInstance: ${{ parameters.sonarqubeInstance }}
+              projectFolder: ${{ parameters.projectFolder }}
+              testFolder: ${{ parameters.testFolder }}
 
   - stage: BuildTestPublish
     displayName: 'Build, Test & Publish'
