@@ -231,8 +231,6 @@ public class GraphServiceTests
         // Arrange
         var userId = Guid.NewGuid();
         var propertyName = "missing";
-        var expected = "expected value";
-        var propertyKey = $"extension_{ExtensionClientId.Replace("-", string.Empty)}_{propertyName}";
 
         _requestAdapterMock.Setup(adapter => adapter.SendAsync(
             It.Is<RequestInformation>(info => info.HttpMethod == Method.GET),
