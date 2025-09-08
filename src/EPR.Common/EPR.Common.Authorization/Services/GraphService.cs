@@ -43,4 +43,35 @@ public class GraphService(
             _logger.LogError(ex, "Error while trying to patch {PropertyName} for user {UserId} with Graph API", propertyName, userId);
         }
     }
+
+    public async Task<string?> QueryUserProperty(Guid userId, string propertyName, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(_extensionsClientId))
+        {
+            return null;
+        }
+
+        try
+        {
+            var propertyKey = $"extension_{_extensionsClientId}_{propertyName}";
+            var graphResponse = await _graphServiceClient
+                .Users[$"{userId}"]
+                .GetAsync(options =>
+                {
+                    options.QueryParameters.Select = [propertyKey];
+                },
+                cancellationToken: cancellationToken);
+
+            if (graphResponse?.AdditionalData?.TryGetValue(propertyKey, out var result) == true)
+            {
+                return result.ToString();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error while trying to read {PropertyName} for user {UserId} with Graph API", propertyName, userId);
+        }
+
+        return null;
+    }
 }

@@ -56,7 +56,6 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection RegisterNullGraphServiceClient(this IServiceCollection services)
     {
-        //return services.AddTransient<IGraphService>(x => default(GraphService));
 #pragma warning disable CS8603 // Possible null reference return.
         return services.AddTransient<IGraphService>(x => default);
 #pragma warning restore CS8603 // Possible null reference return.
