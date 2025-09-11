@@ -56,7 +56,7 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection RegisterNullGraphServiceClient(this IServiceCollection services)
     {
-        return services.AddTransient<IGraphService>(x => default);
+        return services.AddTransient<IGraphService, NullGraphService>();
     }
 
     private static void RegisterConfig(this IServiceCollection services, IConfiguration configuration)
