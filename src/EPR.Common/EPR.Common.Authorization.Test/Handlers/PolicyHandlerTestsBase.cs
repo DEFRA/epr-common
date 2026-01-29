@@ -216,6 +216,22 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
             user,
             _httpContextMock.Object);
 
+        var featureCollection = BuildFeatureCollection(user);
+        _httpContextMock.Setup(x => x.Features).Returns(featureCollection);
+
+        _httpMessageHandlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(JsonSerializer.Serialize(new UserOrganisations { User = userData }))
+            })
+            .Verifiable();
+
         // Act
         await _policyHandler.HandleAsync(authorizationHandlerContext);
 
@@ -306,6 +322,27 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
         var mySession = new MySession
         { UserData = new UserData { ServiceRole = serviceRole, RoleInOrganisation = roleInOrganisation, EnrolmentStatus = enrolmentStatus } };
         _sessionManagerMock.Setup(x => x.GetSessionAsync(It.IsAny<ISession>())).ReturnsAsync(mySession);
+
+        // auth failures result in cache miss, therefor also need to mock same data in http api
+        _httpMessageHandlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(JsonSerializer.Serialize(new UserOrganisations
+                {
+                    User = new UserData
+                    {
+                        ServiceRole = serviceRole,
+                        RoleInOrganisation = roleInOrganisation,
+                        EnrolmentStatus = enrolmentStatus,
+                    }
+                }))
+            })
+            .Verifiable();
 
         // Act
         await _policyHandler.HandleAsync(authorizationHandlerContext);
@@ -418,7 +455,7 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
         Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
     }
 
-    protected async Task HandleRequirementAsync_Fails_WhenApiCallFails()
+    protected async Task HandleRequirementAsync_ThrowsException_WhenApiCallFails()
     {
         // Arrange
         var objectId = "12345678-1234-1234-1234-123456789012";
@@ -454,11 +491,9 @@ public abstract class PolicyHandlerTestsBase<TPolicyHandler, TPolicyRequirement,
             })
             .Verifiable();
 
-        // Act
-        await _policyHandler.HandleAsync(authorizationHandlerContext);
-
-        // Assert
-        Assert.IsFalse(authorizationHandlerContext.HasSucceeded);
+        // Act & Assert
+        await Assert.ThrowsExceptionAsync<HttpRequestException>(async () =>
+            await _policyHandler.HandleAsync(authorizationHandlerContext));
     }
 
     private FeatureCollection BuildFeatureCollection(ClaimsPrincipal user)

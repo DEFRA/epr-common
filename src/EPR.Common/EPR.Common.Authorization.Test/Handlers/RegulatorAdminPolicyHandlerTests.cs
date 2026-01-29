@@ -114,6 +114,6 @@ public class RegulatorAdminPolicyHandlerTests : PolicyHandlerTestsBase<Regulator
             roleInOrganisation, enrolmentStatus);
 
     [TestMethod]
-    public async Task RegulatorAdmin_IsNotAuthorised_WhenApiCallFails() =>
-        await HandleRequirementAsync_Fails_WhenApiCallFails();
+    public async Task RegulatorAdmin_ThrowsException_WhenApiCallFails() =>
+        await HandleRequirementAsync_ThrowsException_WhenApiCallFails();
 }
