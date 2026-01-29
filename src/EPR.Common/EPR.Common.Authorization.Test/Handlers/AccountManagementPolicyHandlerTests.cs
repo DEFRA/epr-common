@@ -123,8 +123,8 @@ public class AccountManagementPolicyHandlerTests
         await HandleRequirementAsync_Fails_WhenUserDataIsRetrievedFromApiButUserRoleIsNotAuthorised(serviceRole, roleInOrganisation, enrolmentStatus);
 
     [TestMethod]
-    public async Task AccountManagement_IsNotAuthorised_WhenApiCallFails() =>
-        await HandleRequirementAsync_Fails_WhenApiCallFails();
+    public async Task AccountManagement_ThrowsException_WhenApiCallFails() =>
+        await HandleRequirementAsync_ThrowsException_WhenApiCallFails();
 
     [TestMethod]
     public async Task AccountManagement_Skips_When_Endpoint_Allows_Anonymous_And_User_Unauthenticated() =>

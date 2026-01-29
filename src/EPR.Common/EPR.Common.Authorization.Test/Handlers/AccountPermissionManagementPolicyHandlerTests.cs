@@ -33,6 +33,6 @@ public class AccountPermissionManagementPolicyHandlerTests
 
 
     [TestMethod]
-    public async Task AccountPermissionManagement_IsNotAuthorised_WhenApiCallFails() =>
-        await HandleRequirementAsync_Fails_WhenApiCallFails();
+    public async Task AccountPermissionManagement_ThrowsException_WhenApiCallFails() =>
+        await HandleRequirementAsync_ThrowsException_WhenApiCallFails();
 }

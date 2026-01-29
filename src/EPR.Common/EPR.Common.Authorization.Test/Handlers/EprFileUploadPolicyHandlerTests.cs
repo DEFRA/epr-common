@@ -102,6 +102,6 @@ public class EprFileUploadPolicyHandlerTests
         await HandleRequirementAsync_Fails_WhenUserDataIsRetrievedFromApiButUserRoleIsNotAuthorised(serviceRole, roleInOrganisation, enrolmentStatus);
 
     [TestMethod]
-    public async Task FileUpload_IsNotAuthorised_WhenApiCallFails() =>
-        await HandleRequirementAsync_Fails_WhenApiCallFails();
+    public async Task FileUpload_ThrowsException_WhenApiCallFails() =>
+        await HandleRequirementAsync_ThrowsException_WhenApiCallFails();
 }

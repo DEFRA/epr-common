@@ -117,8 +117,8 @@ public class RegulatorBasicPolicyHandlerTests : PolicyHandlerTestsBase<Regulator
             roleInOrganisation, enrolmentStatus);
 
     [TestMethod]
-    public async Task RegulatorBasic_IsNotAuthorised_WhenApiCallFails() =>
-        await HandleRequirementAsync_Fails_WhenApiCallFails();
+    public async Task RegulatorBasic_ThrowsException_WhenApiCallFails() =>
+        await HandleRequirementAsync_ThrowsException_WhenApiCallFails();
 
     [TestMethod]
     public async Task RegulatorBasic_Skips_When_Endpoint_Allows_Anonymous_And_User_Unauthenticated() =>

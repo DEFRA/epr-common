@@ -46,42 +46,34 @@ public abstract class PolicyHandlerBase<TPolicyRequirement, TSessionType>
         AuthorizationHandlerContext context,
         TPolicyRequirement requirement)
     {
-        try
+        if (context.User.Identity?.IsAuthenticated != true)
         {
-            if (context.User.Identity?.IsAuthenticated != true)
-            {
-                _logger.LogWarning("User is unauthenticated");
-                return;
-            }
-
-            // check context
-            if (CheckContext(context, requirement))
-                return;
-
-            // check cache
-            if (context.Resource is not HttpContext httpContext)
-            {
-                _logger.LogError("Error getting HttpContext in {PolicyHandler} for user {UserId}",
-                    PolicyHandlerName, context.User.UserId());
-                return;
-            }
-
-            var cacheResult = await CheckCache(context, requirement, httpContext);
-            if (cacheResult.InCache)
-                return;
-
-            // check db via facade
-            if (await CheckDatabase(context, requirement, cacheResult.Session, httpContext))
-                return;
-
-            _logger.LogWarning("User {UserId} does not have permission to {PolicyDescription}",
-                context.User.UserId(), PolicyDescription);
+            _logger.LogWarning("User is unauthenticated");
+            return;
         }
-        catch (Exception e)
+
+        // check context
+        if (CheckContext(context, requirement))
+            return;
+
+        // check cache
+        if (context.Resource is not HttpContext httpContext)
         {
-            _logger.LogError(e, "Error in {PolicyHandler} for user {UserId}",
+            _logger.LogError("Error getting HttpContext in {PolicyHandler} for user {UserId}",
                 PolicyHandlerName, context.User.UserId());
+            return;
         }
+
+        var cacheResult = await CheckCache(context, requirement, httpContext);
+        if (cacheResult.InCache)
+            return;
+
+        // check db via facade
+        if (await CheckDatabase(context, requirement, cacheResult.Session, httpContext))
+            return;
+
+        _logger.LogWarning("User {UserId} does not have permission to {PolicyDescription}",
+            context.User.UserId(), PolicyDescription);
     }
 
     private async Task<bool> CheckDatabase(
