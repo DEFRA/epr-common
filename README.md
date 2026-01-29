@@ -55,6 +55,18 @@ See [User Authorization Middleware](https://eaflood.atlassian.net/wiki/spaces/MW
 - `EPR.Common.Logging` - Logging .NET source files
 - `EPR.Common.Logging.Tests` - .NET unit test files
 
+## Pipelines
+
+### GitHub Actions
+[`.github/workflows/`](.github/workflows/)
+
+Build and test pipeline that runs on pushes to `main` and pull requests targeting `main`. Restores, builds, and tests the full solution.
+
+### Azure DevOps
+[`build/pipelines/`](build/pipelines/)
+
+Per-project pipelines that build, test, and publish NuGet packages to private Azure DevOps feeds. Each library has its own pipeline with path-filtered triggers, SonarQube analysis, semantic versioning, and NuGet package publishing.
+
 ## Contributing to this project
 Please read the [contribution guidelines](CONTRIBUTING.md) before submitting a pull request.
 
