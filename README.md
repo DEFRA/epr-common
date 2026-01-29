@@ -67,6 +67,11 @@ Build and test pipeline that runs on pushes to `main` and pull requests targetin
 
 Per-project pipelines that build, test, and publish NuGet packages to private Azure DevOps feeds. Each library has its own pipeline with path-filtered triggers, SonarQube analysis, semantic versioning, and NuGet package publishing.
 
+The private build pipelines can be found here: [private devops nuget build pipelines](https://dev.azure.com/defragovuk/RWD-CPR-EPR4P-ADO/_build?definitionScope=%5CEPR%20Common).
+
+Prebuilt nuget packages are published to [private azure devops package feeds](https://dev.azure.com/defragovuk/RWD-CPR-EPR4P-ADO/_artifacts/feed/defra-epr-common). (Select "Source: This feed" filter to see just the EPR packages).
+
+
 ## Contributing to this project
 Please read the [contribution guidelines](CONTRIBUTING.md) before submitting a pull request.
 
