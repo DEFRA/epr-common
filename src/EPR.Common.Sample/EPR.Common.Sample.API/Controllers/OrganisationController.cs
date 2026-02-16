@@ -69,7 +69,7 @@ public class OrganisationController : ControllerBase
         new List<CommonPermission> { CommonPermission.AllowAll },
         async () =>
         {
-            using (this.contextAdminOverride.OverrideContext(Guid.Empty, "system@here.com"))
+            using (this.contextAdminOverride.OverrideContext(Guid.Empty, "system@here.com", Guid.NewGuid(), Guid.NewGuid()))
             {
                 await this.organisationService.SeedData();
                 return new OkResult();

@@ -9,7 +9,7 @@
             var builder = WebApplication.CreateBuilder(args);
 
             var config = builder.Configuration;
-            
+
             // Add services to the container.
             builder.Services
                 .AddEprDataContext("https://eprpackage.documents.azure.com:443/", "tPZObbV7YQRsScZzlzh11OR4wZyQbsmgukfYGTWahFcB2a7ZmqMbTfteO8547iAQO3BowLeL8LermDQeFoD1Ow==", "TestDB")

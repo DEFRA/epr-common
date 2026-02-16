@@ -49,7 +49,6 @@ public class OrganisationService : IOrganisationService
         {
             var org = new OrgApplication
             {
-                Id = Guid.NewGuid(),
                 CustomerOrganisationId = Guid.NewGuid(),
                 Users = new List<OrgUser>()
                 {
@@ -95,7 +94,6 @@ public class OrganisationService : IOrganisationService
                     var application = new OrgApplication
                     {
                         CustomerOrganisationId = Guid.NewGuid(),
-                        Id = Guid.NewGuid(),
                     };
                     orgApplications.Add(application);
                 }
