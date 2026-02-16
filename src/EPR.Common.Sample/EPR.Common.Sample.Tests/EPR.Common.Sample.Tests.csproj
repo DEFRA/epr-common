@@ -18,6 +18,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\EPR.Common\EPR.Common.Functions\EPR.Common.Functions.csproj" />
       <ProjectReference Include="..\EPR.Common.Sample.Data\EPR.Common.Sample.Data.csproj" />
     </ItemGroup>
 
