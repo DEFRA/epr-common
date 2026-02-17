@@ -20,39 +20,36 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\..\LICENCE.md = ..\..\LICENCE.md
 		..\..\README.md = ..\..\README.md
 		..\..\CONTRIBUTING.md = ..\..\CONTRIBUTING.md
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{A1337427-5EF3-49E6-9333-97F3E9A388EF}"
-	ProjectSection(SolutionItems) = preProject
 		../stylecop.ruleset = ../stylecop.ruleset
-		../../README.md = ../../README.md
-		../../LICENCE.md = ../../LICENCE.md
-		../../CONTRIBUTING.md = ../../CONTRIBUTING.md
 		../../CODEOWNERS = ../../CODEOWNERS
 		../../.tool-versions = ../../.tool-versions
 		NuGet.Config = NuGet.Config
-		stylecop.ruleset = stylecop.ruleset
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{E59962AB-3769-4476-AC0B-771B3E2110F1}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{535784D6-03A4-4A98-89C6-50690BEFCC5C}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pipelines", "pipelines", "{8F8B3CC0-8B69-4F08-8A64-4C0D12C9F02F}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pipelines", "pipelines", "{3E55DED7-F669-4B41-A6C4-F7DFBCF2FF69}"
 	ProjectSection(SolutionItems) = preProject
 		../../build\pipelines\build-test-push-package-logging.yaml = ../../build\pipelines\build-test-push-package-logging.yaml
 		../../build\pipelines\build-test-push-package-authorization.yaml = ../../build\pipelines\build-test-push-package-authorization.yaml
 		../../build\pipelines\build-test-push-package-functions.yaml = ../../build\pipelines\build-test-push-package-functions.yaml
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{B2CFDB3F-D07A-4D37-8EA1-FFBDE512EAAC}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{5B4D7403-33D3-4F25-94E8-D26333E8F5F4}"
 	ProjectSection(SolutionItems) = preProject
 		../../build\pipelines\templates\template-build-test.yaml = ../../build\pipelines\templates\template-build-test.yaml
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{63246796-D058-4C06-AFCD-CC45447B0ECA}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{221DDE73-7ABA-4C1E-AA62-3E17FDDA7761}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{697C8F36-CD3C-4F63-B79E-34AEA2CFA989}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{1EFBF152-C144-487B-82D7-14FCB8E88065}"
 	ProjectSection(SolutionItems) = preProject
 		../../.github\workflows\build-test.yml = ../../.github\workflows\build-test.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "epr.common", "epr.common", "{14A63798-3ABA-415B-968F-2AE8098B2366}"
+	ProjectSection(SolutionItems) = preProject
+		stylecop.ruleset = stylecop.ruleset
 	EndProjectSection
 EndProject
 Global
@@ -87,10 +84,11 @@ Global
 		{D9A2AA81-66D5-4D35-9521-9E1C1C69BE0A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{E59962AB-3769-4476-AC0B-771B3E2110F1} = {A1337427-5EF3-49E6-9333-97F3E9A388EF}
-		{63246796-D058-4C06-AFCD-CC45447B0ECA} = {A1337427-5EF3-49E6-9333-97F3E9A388EF}
-		{8F8B3CC0-8B69-4F08-8A64-4C0D12C9F02F} = {E59962AB-3769-4476-AC0B-771B3E2110F1}
-		{B2CFDB3F-D07A-4D37-8EA1-FFBDE512EAAC} = {8F8B3CC0-8B69-4F08-8A64-4C0D12C9F02F}
-		{697C8F36-CD3C-4F63-B79E-34AEA2CFA989} = {63246796-D058-4C06-AFCD-CC45447B0ECA}
+		{535784D6-03A4-4A98-89C6-50690BEFCC5C} = {4D2C00FA-26C7-4CEF-A62D-562905B87999}
+		{221DDE73-7ABA-4C1E-AA62-3E17FDDA7761} = {4D2C00FA-26C7-4CEF-A62D-562905B87999}
+		{3E55DED7-F669-4B41-A6C4-F7DFBCF2FF69} = {535784D6-03A4-4A98-89C6-50690BEFCC5C}
+		{5B4D7403-33D3-4F25-94E8-D26333E8F5F4} = {3E55DED7-F669-4B41-A6C4-F7DFBCF2FF69}
+		{1EFBF152-C144-487B-82D7-14FCB8E88065} = {221DDE73-7ABA-4C1E-AA62-3E17FDDA7761}
+		{14A63798-3ABA-415B-968F-2AE8098B2366} = {4D2C00FA-26C7-4CEF-A62D-562905B87999}
 	EndGlobalSection
 EndGlobal
