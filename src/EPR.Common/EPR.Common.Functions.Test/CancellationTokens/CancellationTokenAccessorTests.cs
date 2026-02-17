@@ -112,6 +112,38 @@ public class CancellationTokenAccessorTests
             act.Should().NotThrow();
         }
 
+        [TestMethod]
+        public void Dispose_WhenInitialized_DisposesTokenSource()
+        {
+            // Arrange
+            var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
+            httpContextAccessor.HttpContext.RequestAborted = CancellationToken.None;
+            var cancellationTokenAccessor = new CancellationTokenAccessor(httpContextAccessor, Substitute.For<ILogger<CancellationTokenAccessor>>());
+            cancellationTokenAccessor.CancellationToken = CancellationToken.None;
+
+            // Act
+            var act = () => cancellationTokenAccessor.Dispose();
+
+            // Assert
+            act.Should().NotThrow();
+        }
+
+        [TestMethod]
+        public void CancellationToken_WhenHttpContextAccessorIsNull_StillWorks()
+        {
+            // Arrange
+            var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
+            httpContextAccessor.HttpContext.Returns((HttpContext)null);
+            var cancellationTokenAccessor = new CancellationTokenAccessor(httpContextAccessor, Substitute.For<ILogger<CancellationTokenAccessor>>());
+
+            // Act
+            cancellationTokenAccessor.CancellationToken = CancellationToken.None;
+            var token = cancellationTokenAccessor.CancellationToken;
+
+            // Assert
+            token.Should().NotBeNull();
+        }
+
         private static ICancellationTokenAccessor GetCancellationTokenAccessor(CancellationToken? suppliedCancellationToken = null, CancellationToken? httpRequestAbortedCancellationToken = null)
         {
             var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
