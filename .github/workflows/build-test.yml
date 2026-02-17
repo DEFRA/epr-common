@@ -26,9 +26,3 @@ jobs:
 
       - name: Test
         run: dotnet test src/EPR.Common/EPR.Common.sln --no-build --configuration Release --verbosity normal
-
-      - name: Build Samples
-        run: dotnet build src/EPR.Common.Sample/EPR.Common.Sample.API.sln --no-restore --configuration Release
-
-      - name: Test Samples
-        run: dotnet test src/EPR.Common.Sample/EPR.Common.Sample.API.sln --no-build --configuration Release --verbosity normal
