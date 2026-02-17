@@ -63,3 +63,4 @@ stages:
             displayName: 'SonarQube Publish'
             inputs:
               pollingTimeoutSec: '300'
+              waitForQualityGate: true
