@@ -34,4 +34,59 @@ public class HttpAuthenticatorTests
         // Assert
         result.Should().BeFalse();
     }
+
+    [TestMethod]
+    public async Task AuthenticateAsync_ReturnsTrue_AndExtractsClaims_WhenTokenValid()
+    {
+        // Arrange - create a minimal JWT with required claims
+        var userId = Guid.NewGuid();
+        var orgId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var header = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("{\"alg\":\"none\",\"typ\":\"JWT\"}")).TrimEnd('=');
+        var payload = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(
+            $"{{\"uniqueReference\":\"{userId}\",\"email\":\"test@test.com\",\"customerOrganisationId\":\"{orgId}\",\"customerId\":\"{customerId}\"}}")).TrimEnd('=');
+        var token = $"Bearer {header}.{payload}.";
+
+        // Act
+        var result = await this.httpAuthenticator.AuthenticateAsync(token);
+
+        // Assert
+        result.Should().BeTrue();
+        this.httpAuthenticator.UserId.Should().Be(userId);
+        this.httpAuthenticator.EmailAddress.Should().Be("test@test.com");
+        this.httpAuthenticator.CustomerOrganisationId.Should().Be(orgId);
+        this.httpAuthenticator.CustomerId.Should().Be(customerId);
+    }
+
+    [TestMethod]
+    public void UserId_ThrowsNotSupportedException_WhenNotAuthenticated()
+    {
+        var act = () => this.httpAuthenticator.UserId;
+
+        act.Should().Throw<NotSupportedException>();
+    }
+
+    [TestMethod]
+    public void EmailAddress_ThrowsNotSupportedException_WhenNotAuthenticated()
+    {
+        var act = () => this.httpAuthenticator.EmailAddress;
+
+        act.Should().Throw<NotSupportedException>();
+    }
+
+    [TestMethod]
+    public void CustomerOrganisationId_ThrowsNotSupportedException_WhenNotAuthenticated()
+    {
+        var act = () => this.httpAuthenticator.CustomerOrganisationId;
+
+        act.Should().Throw<NotSupportedException>();
+    }
+
+    [TestMethod]
+    public void CustomerId_ThrowsNotSupportedException_WhenNotAuthenticated()
+    {
+        var act = () => this.httpAuthenticator.CustomerId;
+
+        act.Should().Throw<NotSupportedException>();
+    }
 }
