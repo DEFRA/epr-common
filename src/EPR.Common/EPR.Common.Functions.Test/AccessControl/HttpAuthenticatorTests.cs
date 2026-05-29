@@ -11,15 +11,11 @@ using NSubstitute;
 public class HttpAuthenticatorTests
 {
     private HttpAuthenticator httpAuthenticator;
-    private ILogger<HttpAuthenticator> logger;
-    private ICancellationTokenAccessor cancellationTokenAccessor;
 
     [TestInitialize]
     public void Setup()
     {
-        this.logger = Substitute.For<ILogger<HttpAuthenticator>>();
-        this.cancellationTokenAccessor = Substitute.For<ICancellationTokenAccessor>();
-        this.httpAuthenticator = new HttpAuthenticator(this.logger, this.cancellationTokenAccessor);
+        this.httpAuthenticator = new HttpAuthenticator();
     }
 
     [TestMethod]

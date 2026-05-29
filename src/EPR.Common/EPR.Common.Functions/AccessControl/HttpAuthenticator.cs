@@ -7,18 +7,10 @@ using Microsoft.Extensions.Logging;
 
 public class HttpAuthenticator : IAuthenticator
     {
-        private readonly ICancellationTokenAccessor cancellationTokenAccessor;
-        private readonly ILogger<HttpAuthenticator> logger;
         private Guid? userId;
         private string? emailAddress;
         private Guid? customerOrganisationId;
         private Guid? customerId;
-
-        public HttpAuthenticator(ILogger<HttpAuthenticator> logger, ICancellationTokenAccessor cancellationTokenAccessor)
-        {
-            this.logger = logger;
-            this.cancellationTokenAccessor = cancellationTokenAccessor;
-        }
 
         public Guid UserId => this.userId ?? throw new NotSupportedException("UserId cannot be used before authentication");
 

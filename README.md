@@ -41,7 +41,11 @@ N/A
 N/A
 
 ## How To Debug
-N/A
+You can refererence these assemblies directly, or build a nuget package locally and reference that instead. Build the assembly in _Release_ configuration, and run the following command:
+```
+dotnet pack <project file> -o <output directory>
+```
+For further options, see the [documentation](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-pack).
 
 ## Additional Information
 See [User Authorization Middleware](https://eaflood.atlassian.net/wiki/spaces/MWR/pages/4346839200/User+Authorization+Middleware)
