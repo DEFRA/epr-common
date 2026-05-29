@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Services;
@@ -32,13 +33,17 @@ public static class DependencyInjectionExtensions
             .AddTransient<IUnitOfWork, UnitOfWork>()
             .AddTransient<IEntityDecorator, CreatedUpdatedDecorator>();
 
-    public static IServiceCollection AddCommonServices(this IServiceCollection services) =>
-        services
-            .AddSingleton<ILoggerFactory, LoggerFactory>()
-            .AddSingleton(typeof(ILogger<>), typeof(Logger<>))
+    public static IServiceCollection AddCommonServices(this IServiceCollection services)
+    {
+        // only add logger if it has not already been added
+        services.TryAddSingleton(typeof(ILogger<>), typeof(Logger<>));
+        services.TryAddSingleton<ILoggerFactory, LoggerFactory>();
+
+        return services
             .AddTransient<ITimeService, TimeService>()
             .AddTransient<IHttpContextAccessor, HttpContextAccessor>()
             .AddScoped<ICancellationTokenAccessor, CancellationTokenAccessor>();
+    }
 
     public static IServiceCollection AddMockAuthentication(this IServiceCollection services, ConfigurationManager config)
     {
