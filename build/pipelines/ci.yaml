@@ -9,11 +9,18 @@ trigger:
 pool: DEFRA-COMMON-ubuntu2004-SSV3
 
 variables:
-  solutionFolder: src/EPR.Common
-  solution: src/EPR.Common/EPR.Common.sln
-  buildConfiguration: Release
-  sonarQubeProjectKey: epr-common
-  sonarQubeProjectName: epr-common
+  # EPRADO-SonarQubeToken, linked to Key Vault DEVRWDINFKV1401
+  - group: EPR-SonarQube
+  - name: solutionFolder
+    value: src/EPR.Common
+  - name: solution
+    value: src/EPR.Common/EPR.Common.sln
+  - name: buildConfiguration
+    value: Release
+  - name: sonarQubeProjectKey
+    value: epr-common
+  - name: sonarQubeProjectName
+    value: epr-common
 
 stages:
   - stage: Build_Test_Analyse
@@ -63,13 +70,6 @@ stages:
             displayName: 'SonarQube Publish'
             inputs:
               pollingTimeoutSec: '300'
-
-          - task: AzureKeyVault@2
-            displayName: 'Get SonarQube Token'
-            inputs:
-              azureSubscription: 'AZD-RWD-DEV1'
-              KeyVaultName: 'DEVRWDINFKV1401'
-              SecretsFilter: 'EPRADO-SonarQubeToken'
 
           - powershell: |
               if ("$(Build.Reason)" -eq "PullRequest") {
