@@ -9,7 +9,7 @@ trigger:
 pool: DEFRA-COMMON-ubuntu2004-SSV3
 
 variables:
-  # EPRADO-SonarQubeToken, linked to Key Vault DEVRWDINFKV1401
+  # EPRADO-SonarQubeToken for the SonarQube steps
   - group: EPR-SonarQube
   - name: solutionFolder
     value: src/EPR.Common
